@@ -1,0 +1,10 @@
+std::unique_ptr<B> p = std::make_unique<D>(); // p is a unique_ptr that owns a D
+                                                  // as a pointer to base
+    p->bar(); // virtual dispatch
+ 
+    std::vector<std::unique_ptr<B>> v;  // unique_ptr can be stored in a container
+    v.push_back(std::make_unique<D>());
+    v.push_back(std::move(p));
+    v.emplace_back(new D);
+    for(auto& p: v) p->bar(); // virtual dispatch
+
