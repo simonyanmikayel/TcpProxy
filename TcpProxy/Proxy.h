@@ -7,7 +7,7 @@ class Proxy
 public:
     Proxy();
     ~Proxy();
-    boolean Start();
+    boolean Start(const std::vector<ROUTE>& routes);
     void Stop();
     void AddRoute(const ROUTE& r);
     boolean Running() { return m_hIoCompPort != NULL; }

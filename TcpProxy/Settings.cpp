@@ -8,8 +8,51 @@ CSettings gSettings;
 LPCTSTR STR_APP_REG_KEY = _T("Software\\TermianlTools\\TcpProxy");
 LPCTSTR STR_APP_REG_VAL_WINDOWPOS = _T("WindowPos");
 
-CSettings::CSettings() :
-	CRegKeyExt(STR_APP_REG_KEY)
+INT_VALUE::INT_VALUE(LPCTSTR sz, int defVal) : szRegKey(sz)
+{
+	gSettings.ReadINT(szRegKey, val, defVal);
+}
+
+void INT_VALUE::Set(int val)
+{
+	this->val = val;
+	gSettings.WriteINT(szRegKey, val);
+}
+
+template<typename T> 
+ARR_VALUE<T>::ARR_VALUE(LPCTSTR sz) : szRegKey(sz)
+{
+	DWORD cbData, dwDataTye;
+	gSettings.CheckData(szRegKey, &cbData, &dwDataTye);
+	if (dwDataTye == REG_SZ && cbData > 0 && cbData < MAX_DATA_SIZE)
+	{
+		std::string str;
+		str.resize(cbData);
+		if (gSettings.ReadSTR(szRegKey, (char*)str.c_str(), (int)cbData))
+		{
+//			str = "1\n2\n3\n4\n5\n";
+			std::stringstream s(str);
+			int count;
+			s >> count;
+			if (count > 0 && count < MAX_ARRAY_SIZE)
+			{
+				val.clear();
+				val.reserve(count);
+				for (int i = 0; i < count; i++)
+				{
+					T t;
+					t.deserialize(s);
+					val.push_back(t);
+				}
+			}
+		}
+	}
+}
+
+CSettings::CSettings() 
+	: CRegKeyExt(STR_APP_REG_KEY)
+	, vertSplitterPos(_T("vertSplitterPos"), 50)
+	, routes(_T("routes"))
 {
 
 }
@@ -21,7 +64,8 @@ CSettings::~CSettings()
 void CSettings::RestoreWindPos(HWND hWnd)
 {
 	WINDOWPLACEMENT wpl;
-	if (Read(STR_APP_REG_VAL_WINDOWPOS, &wpl, sizeof(wpl))) {
+	if (ReadBINARY(STR_APP_REG_VAL_WINDOWPOS, &wpl, sizeof(wpl))) 
+	{
 		RECT rcWnd = wpl.rcNormalPosition;
 		int cx, cy, x, y;
 		cx = rcWnd.right - rcWnd.left;
@@ -70,5 +114,5 @@ void CSettings::SaveWindPos(HWND hWnd)
 {
 	WINDOWPLACEMENT wpl = { sizeof(WINDOWPLACEMENT) };
 	if (::GetWindowPlacement(hWnd, &wpl))
-		Write(STR_APP_REG_VAL_WINDOWPOS, &wpl, sizeof(wpl));
+		WriteBINARY(STR_APP_REG_VAL_WINDOWPOS, &wpl, sizeof(wpl));
 }

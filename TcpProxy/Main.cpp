@@ -9,7 +9,6 @@
 
 
 CAppModule _Module;
-CMainFrame* gMainFrame;
 
 int Run(LPTSTR /*lpstrCmdLine*/ = NULL, int nCmdShow = SW_SHOWDEFAULT)
 {

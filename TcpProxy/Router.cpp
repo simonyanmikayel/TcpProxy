@@ -1,24 +1,17 @@
 #include "stdafx.h"
 #include "Helpers.h"
-#include "Proxy.h"
 #include "wsock.h"
 #include "Router.h"
 
 //https://docs.microsoft.com/en-us/windows/win32/api/mswsock/nf-mswsock-acceptex
 
-ROUTE::ROUTE()
-{
-	ENTER_FUNC();
-}
-
-ROUTE::~ROUTE()
-{
-	ENTER_FUNC();
-}
+DWORD Router::m_ID = 0;
+DWORD Connection::m_ID = 0;
 
 Router::Router(const ROUTE& r) :
 	m_Route{r}
 	, m_ListenSocket(INVALID_SOCKET)
+	, m_id(++m_ID)
 {
 	ENTER_FUNC();
 }
@@ -54,8 +47,10 @@ SOCKET CreateBoundTcpSocket(u_short port = 0)
 boolean Router::StartListening(HANDLE hIoCompPort)
 {
 	ENTER_FUNC();
+	if (!m_Route.IsValid())
+		return false;
 	// Create a listening socket
-	m_ListenSocket = CreateBoundTcpSocket(m_Route.m_local_port);
+	m_ListenSocket = CreateBoundTcpSocket(m_Route.local_port);
 	if (m_ListenSocket == INVALID_SOCKET) 
 	{
 		Helpers::SysErrMessageBox("Create of ListenSocket socket failed with error: %u\n", WSAGetLastError());
@@ -105,7 +100,7 @@ boolean Router::DoAccept(HANDLE hIoCompPort)
 	const int addrBufLen = sizeof(sockaddr_in) + 16;
 	char lpOutputBuf[2* addrBufLen];
 	DWORD dwBytes = 0;
-	AcceptSocket.m_io_type = IO_ACCEPT;
+	AcceptSocket.m_io_type = IO_TYPE::ACCEPT;
 	BOOL bRetVal = wsock::lpfnAcceptEx(
 		m_ListenSocket, 
 		AcceptSocket.m_s,
@@ -150,10 +145,10 @@ boolean Router::DoConnect(Connection* pConnection, HANDLE hIoCompPort)
 	SOCKADDR_IN  server;
 	memset(&server, 0, sizeof(server));
 	server.sin_family = AF_INET;
-	server.sin_port = htons(m_Route.m_remoute_port);
-	server.sin_addr.s_addr = inet_addr(m_Route.m_remoute_addr.c_str());
-	STDLOG("Connecting to: %s:%d\n", inet_ntoa(server.sin_addr), m_Route.m_remoute_port);
-	ConnectSocket.m_io_type = IO_CONNECT;
+	server.sin_port = htons(m_Route.remote_port);
+	server.sin_addr.s_addr = inet_addr(m_Route.remote_addr.c_str());
+	STDLOG("Connecting to: %s:%d\n", inet_ntoa(server.sin_addr), m_Route.remote_port);
+	ConnectSocket.m_io_type = IO_TYPE::CONNECT;
 	DWORD dwBytes = 0;
 	BOOL bRetVal = wsock::lpfnConnectEx(
 		ConnectSocket.m_s,
@@ -181,7 +176,7 @@ boolean Router::DoRecv(Socket* pSocket, HANDLE hIoCompPort)
 	ENTER_FUNC();
 	DWORD dwBytes = 0, dwFlags = 0;
 	WSABUF wsabuf = { pSocket->bufSize, pSocket->buf };
-	pSocket->m_io_type = IO_RECV;
+	pSocket->m_io_type = IO_TYPE::RECV;
 	int Result = WSARecv(pSocket->m_s, &wsabuf, 1, &dwBytes, &dwFlags, pSocket, 0);
 
 	if (Result == SOCKET_ERROR) 
@@ -201,7 +196,7 @@ boolean Router::DoSend(Socket* pSocket, DWORD dwNumberOfBytes, char* buf, HANDLE
 	ENTER_FUNC();
 	DWORD dwBytes = 0, dwFlags = 0;
 	WSABUF wsabuf = { dwNumberOfBytes, buf };
-	pSocket->m_io_type = IO_SEND;
+	pSocket->m_io_type = IO_TYPE::SEND;
 	int Result = WSASend(pSocket->m_s, &wsabuf, 1, &dwBytes, dwFlags, pSocket, 0);
 
 	if (Result == SOCKET_ERROR)

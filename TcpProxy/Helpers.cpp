@@ -46,5 +46,17 @@ namespace Helpers
         }
     }
 
+    char* int2char(int i) 
+    {
+        static char buf[128];
+        buf[0] = 0;
+        _itoa_s(i, buf, _countof(buf), 10);
+        return buf;
+    }
+
+    void UpdateStatusBar()
+    {
+        gMainFrame->UpdateStatusBar();
+    }
 };
 

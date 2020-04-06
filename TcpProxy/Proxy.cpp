@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Helpers.h"
+#include "Archive.h"
 #include "Proxy.h"
 
 Proxy gProxy;
@@ -17,7 +18,7 @@ Proxy::~Proxy()
 	Stop();
 }
 
-boolean Proxy::Start()
+boolean Proxy::Start(const std::vector<ROUTE>& routes)
 {
 	ENTER_FUNC();
 	if (Running())
@@ -30,9 +31,9 @@ boolean Proxy::Start()
 	m_hIoCompThread = CreateThread(0, 0, IoCompThread, this, 0, &dwTID);
 	WaitForSingleObject(m_hThreadStarted, INFINITE);
 
-	for (auto& r : m_Routers)
+	for (auto& r : routes)
 	{
-		r->StartListening(m_hIoCompPort);
+		AddRoute(r);
 	}
 	return true;
 }
@@ -55,8 +56,10 @@ void Proxy::AddRoute(const ROUTE& r)
 {
 	ENTER_FUNC();
 	m_Routers.push_back(std::make_unique<Router>(r));
+	std::unique_ptr<Router>& router = m_Routers.back();
+	gArchive.addRouter(router.get());
 	if (Running())
-		m_Routers.back()->StartListening(m_hIoCompPort);
+		router->StartListening(m_hIoCompPort);
 }
 
 DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
@@ -87,7 +90,7 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 			OVERLAPPED_ENTRY& entry = overlapped_entries[i];
 			Socket* pSocket = (Socket*)entry.lpOverlapped;
 			Connection* pConnection = pSocket->m_pConnection;
-			if (pSocket->This != (void*)pSocket || pSocket->m_io_type <= IO_NONE || pSocket->m_io_type >= IO_LAST || (!pConnection->IsAccepSocket(pSocket) && !pConnection->IsConnectSocket(pSocket)) )
+			if (pSocket->This != (void*)pSocket || pSocket->m_io_type <= IO_TYPE::NONE || pSocket->m_io_type >= IO_TYPE::LAST || (!pConnection->IsAccepSocket(pSocket) && !pConnection->IsConnectSocket(pSocket)) )
 			{
 				Helpers::SysErrMessageBox("Implementation error 1");
 				break;
@@ -103,33 +106,39 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 					IoTypeNmae(pSocket->m_io_type), 
 					entry.dwNumberOfBytesTransferred, err);
 
-				if (IO_ACCEPT == pSocket->m_io_type)
+				if (IO_TYPE::ACCEPT == pSocket->m_io_type)
 				{
-					if (!pRouter->DoAccept(pProxy->m_hIoCompPort)) //loop og accept
+					if (!pRouter->DoAccept(pProxy->m_hIoCompPort)) //loop of accept
 						pConnection->close();
+				}
+				if (err == 0 && entry.dwNumberOfBytesTransferred == 0 && (IO_TYPE::RECV == pSocket->m_io_type || IO_TYPE::SEND == pSocket->m_io_type))
+				{
+					err = SOCKET_ERROR;
 				}
 				if (err == 0)
 				{
-					if (IO_ACCEPT == pSocket->m_io_type)
+					if (IO_TYPE::ACCEPT == pSocket->m_io_type)
 					{
+						gArchive.addConnection(pConnection);
 						if (!pRouter->DoConnect(pConnection, pProxy->m_hIoCompPort))
 							pConnection->close();
 					}
-					else if (IO_CONNECT == pSocket->m_io_type)
+					else if (IO_TYPE::CONNECT == pSocket->m_io_type)
 					{
 						if (!pRouter->DoRecv(&pConnection->m_AcceptSocket, pProxy->m_hIoCompPort) ||
 							!pRouter->DoRecv(&pConnection->m_ConnectSocket, pProxy->m_hIoCompPort) )
 							pConnection->close();
 					}
-					else if (IO_RECV == pSocket->m_io_type)
+					else if (IO_TYPE::RECV == pSocket->m_io_type)
 					{
+						gArchive.addRecv(pSocket);
 						if (!pRouter->DoRoute(pSocket, entry.dwNumberOfBytesTransferred, pProxy->m_hIoCompPort) ||
-							!pRouter->DoRecv(pSocket, pProxy->m_hIoCompPort)) // route and again recive
+							!pRouter->DoRecv(pSocket, pProxy->m_hIoCompPort)) // recive loop
 							pConnection->close();
 					}
-					else if (IO_SEND == pSocket->m_io_type)
+					else if (IO_TYPE::SEND == pSocket->m_io_type)
 					{
-						if (!pRouter->DoRecv(pSocket, pProxy->m_hIoCompPort))
+						if (!pRouter->DoRecv(pSocket, pProxy->m_hIoCompPort)) // recive loop
 							pConnection->close();
 					}
 				}
