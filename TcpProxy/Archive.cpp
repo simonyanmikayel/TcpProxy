@@ -65,12 +65,16 @@ ROUTER_NODE* Archive::addRouter(const Router* pRouter)
     ROUTER_NODE* pNode = getRouter(pRouter);
     if (pNode == nullptr)
     {
-        pNode = (ROUTER_NODE*)m_pNodes->Add(sizeof(ROUTER_NODE), true);
+        const char* name = pRouter->GetRote()->name.c_str();
+        WORD cb_name = (WORD)strlen(name);
+        pNode = (ROUTER_NODE*)m_pNodes->Add(sizeof(ROUTER_NODE) + cb_name, true);
         if (!pNode)
             return nullptr;
 
-        pNode->data_type = LOG_TYPE::ROUTE;
+        pNode->data_type = LOG_TYPE::ROUTER;
         pNode->id = pRouter->ID();
+        pNode->cb_name = cb_name;
+        memcpy(pNode->name(), name, cb_name);
         getRootNode()->add_child(pNode);
     }
     return pNode;

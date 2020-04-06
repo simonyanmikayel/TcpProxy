@@ -3,7 +3,7 @@
 #include "Buffer.h"
 #include "Router.h"
 
-enum class LOG_TYPE { ROOT, ROUTE, CONN, RECV};
+enum class LOG_TYPE { ROOT, ROUTER, CONN, RECV};
 
 struct LOG_NODE
 {
@@ -32,7 +32,7 @@ struct LOG_NODE
     DWORD childCount;
 
     bool isRoot() { return data_type == LOG_TYPE::ROOT; }
-    bool isRoute() { return data_type == LOG_TYPE::ROUTE; }
+    bool isRouter() { return data_type == LOG_TYPE::ROUTER; }
     bool isConn() { return data_type == LOG_TYPE::CONN; }
     bool isRecv() { return data_type == LOG_TYPE::RECV; }
 
@@ -76,6 +76,8 @@ struct ROOT_NODE : LOG_NODE
 struct ROUTER_NODE : LOG_NODE
 {
     DWORD id;
+    WORD cb_name;
+    char* name() { return (char*)(this) + sizeof(*this); }
 };
 
 struct CONN_NODE : LOG_NODE

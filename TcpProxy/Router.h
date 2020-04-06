@@ -70,6 +70,7 @@ public:
     boolean DoRoute(Socket* pRecvSocket, DWORD dwNumberOfBytes, HANDLE hIoCompPort);
     DWORD ID() const { return m_id; }
     void Stop();
+    const ROUTE* GetRote() const { return &m_Route; }
 
 private:
     static DWORD m_ID;

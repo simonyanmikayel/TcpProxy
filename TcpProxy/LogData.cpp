@@ -2,7 +2,6 @@
 #include "Archive.h"
 #include "LogData.h"
 
-
 void LOG_NODE::CalcLines()
 {
     LOG_NODE* pNode = gArchive.getRootNode();
@@ -55,7 +54,7 @@ int LOG_NODE::getTreeImage()
     {
         return 0;//IDI_ICON_TREE_ROOT
     }
-    else if (isRoute())
+    else if (isRouter())
     {
         return 1;//IDI_ICON_TREE_ROUTE
     }
@@ -81,7 +80,6 @@ CHAR* LOG_NODE::getTreeText(int* cBuf, bool extened)
     static CHAR pBuf[cMaxBuf + 1];
     int cb = 0;
     CHAR* ret = pBuf;
-    int NN = getNN();
 #ifdef _DEBUG
     //cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT("[%d %d %d]"), GetExpandCount(), line, lastChild ? lastChild->index : 0);
 #endif
@@ -89,84 +87,34 @@ CHAR* LOG_NODE::getTreeText(int* cBuf, bool extened)
     {
         cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT("..."));
     }
-    else if (isApp())
+    else if (isRouter())
     {
-        APP_NODE* This = (APP_NODE*)this;
-        cb = This->cb_app_name;
-        memcpy(pBuf, This->appName, cb);
+        ROUTER_NODE* This = (ROUTER_NODE*)this;
+        cb = std::min(cMaxBuf - 1, (int)This->cb_name);
+        memcpy(pBuf, This->name(), cb);
         pBuf[cb] = 0;
-        if (This->lost)
-        {
-            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT(" (Lost: %d)"), This->lost);
-        }
-        if (gSettings.GetShowAppIp() && This->ip_address[0])
-        {
-            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT(" (%s)"), This->ip_address);
-        }
-        if (gSettings.GetColPID())
-        {
-            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("[%d]"), This->pid);
-        }
     }
-    else if (isThread())
+    else if (isConn())
     {
-        if (gSettings.GetColPID() && gSettings.GetColTID())
-            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("[%d-%d-%d]"), getThreadNN(), getPid(), getTid());
-        else if (gSettings.GetColPID())
-            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("[%d-%d]"), getThreadNN(), getPid());
-        else if (gSettings.GetColTID())
-            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("[%d-%d]"), getThreadNN(), getTid());
-        else
-            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("[%d]"), getThreadNN());
-        if (gSettings.GetShowChildCount())
-            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("[%d]"), childCount);
-
-    }
-    else if (isFlow())
-    {
-        FLOW_NODE* This = (FLOW_NODE*)this;
-        int cb_fn_name = This->cb_fn_name;
-        char* name = This->shortFnName();
-        memcpy(pBuf + cb, name, This->cb_fn_name - This->cb_short_fn_name_offset);
-        cb += This->cb_fn_name - This->cb_short_fn_name_offset;
+        //TODO - show pear addr
+        CONN_NODE* This = (CONN_NODE*)this;
+        cb = std::min(cMaxBuf - 1, 4);
+        memcpy(pBuf, "TODO", cb);
         pBuf[cb] = 0;
-        if (extened)
-        {
-            if (gSettings.GetColNN() && NN)
-                cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT(" (%d)"), NN); //gArchive.index(this) NN
-            if (gSettings.GetShowElapsedTime() && This->getPeer())
-            {
-                _int64 sec1 = This->getTimeSec();
-                _int64 msec1 = This->getTimeMSec();
-                _int64 sec2 = (This->getPeer())->getTimeSec();
-                _int64 msec2 = (This->getPeer())->getTimeMSec();
-                cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT(" (%lldms)"), (sec2 - sec1) * 1000 + (msec2 - msec1));
-            }
-            if (gSettings.GetColCallAddr())
-            {
-                DWORD p = This->call_site;
-                cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT(" (%X)"), p);
-            }
-            if (gSettings.GetFnCallLine())
-            {
-                ADDR_INFO* p_call_addr_info = This->getCallInfo(false);
-                if (p_call_addr_info != 0)
-                    cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT(" (%d)"), p_call_addr_info->line);
-            }
-            if (gSettings.GetShowChildCount())
-            {
-                cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("[%d]"), childCount);
-            }
-        }
+    }
+    else if (isRecv())
+    {
+        //TODO - show IO info
+        RECV_NODE* This = (RECV_NODE*)this;
+        cb = std::min(cMaxBuf - 1, 4);
+        memcpy(pBuf, This->isLocal ? "IO->" : "IO<-" , cb);
         pBuf[cb] = 0;
     }
     else
     {
         ATLASSERT(FALSE);
+        pBuf[cb] = 0;
     }
-    if (cb > cMaxBuf)
-        cb = cMaxBuf;
-    pBuf[cb] = 0;
     if (cBuf)
         *cBuf = cb;
     return ret;
