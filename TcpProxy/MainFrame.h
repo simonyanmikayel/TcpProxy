@@ -37,7 +37,8 @@ public:
         COMMAND_ID_HANDLER(ID_APP_ABOUT, OnAppAbout)
         COMMAND_ID_HANDLER(ID_VIEW_STARTPROXY, OnStartProxy)
         COMMAND_ID_HANDLER(ID_VIEW_STOPPROXY, OnStopProxy)
-        COMMAND_ID_HANDLER(ID_VIEW_PROXYSETTINGS, OnProxySettings)
+        COMMAND_ID_HANDLER(ID_VIEW_ROUTE_TABLSE, OnRouteTable)
+        COMMAND_ID_HANDLER(ID_VIEW_SETTINGS, OnProxySettings)
         COMMAND_ID_HANDLER(ID_VIEW_CLEARLOG, OnClearLog)
 
         CHAIN_MSG_MAP(CUpdateUI<CMainFrame>)
@@ -53,6 +54,7 @@ public:
     LRESULT OnAppAbout(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnStartProxy(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnStopProxy(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+    LRESULT OnRouteTable(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnProxySettings(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnClearLog(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT onShowMsg(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);

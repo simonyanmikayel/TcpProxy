@@ -21,5 +21,6 @@ public:
 	LRESULT OnCustomDraw(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/);
 	void SetChiledPos();
 	void Clear();
+	void ApplySettings();
 };
 

@@ -1,119 +1,77 @@
 #include "stdafx.h"
 #include "resource.h"
-#include "DlgRoute.h"
 #include "DlgSettings.h"
 #include "Settings.h"
-#include "Helpers.h"
+
+#define AS(s) m_cmbFontSize.AddString(#s)
 
 LRESULT DlgSettings::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-    m_RouteList.Attach(GetDlgItem(IDC_ROUTE_LIST));
-    //m_RouteList.ModifyStyleEx(0, LVS_EX_FULLROWSELECT);
-    ListView_SetExtendedListViewStyle(m_RouteList, LVS_EX_FULLROWSELECT);
-    m_RouteList.InsertColumn(0, _T("Route name"), LVCFMT_LEFT, 200);
-    m_RouteList.InsertColumn(1, _T("Local port"), LVCFMT_LEFT, 80);
-    m_RouteList.InsertColumn(2, _T("Remote port"), LVCFMT_LEFT, 90);
-    m_RouteList.InsertColumn(3, _T("Remote address"), LVCFMT_LEFT, 210);
+  m_lblFont.Attach(GetDlgItem(IDC_FONT_NAME));
+  m_btnFont.Attach(GetDlgItem(IDC_BTN_FONT));
 
-    auto& r = gSettings.routes.Get();
-    for (int i = 0; i < r.size(); i++)
-    {
-        AddRoute(r[i]);
-    }
-    m_RouteList.SelectItem(0);
+  m_FontSize = gSettings.fontSize.Get();
+  strncpy_s(m_FaceName, _countof(m_FaceName), gSettings.fontName.Get(), _countof(m_FaceName) - 1);
+  m_FaceName[LF_FACESIZE - 1] = 0;
+  m_lfWeight = gSettings.fontWeight.Get();
+  SetFontLabel();
+  
+  CenterWindow(GetParent());
+  return TRUE;
+}
 
-    CenterWindow(GetParent());
-    return TRUE;
+void DlgSettings::SetFontLabel()
+{
+  CString str;
+  str.Format(_T("Font: %s, %s%d point "), m_FaceName, m_lfWeight >= FW_SEMIBOLD  ? _T("Bold ") : _T(""), m_FontSize);
+  m_lblFont.SetWindowText(str);
+}
+
+LRESULT DlgSettings::OnBnClickedBtnFont(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+  CHOOSEFONT cf;
+  HDC hdc;
+  LOGFONT lf;
+
+  hdc = ::GetDC(0);
+  lf.lfHeight = -MulDiv(m_FontSize, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+  ::ReleaseDC(0, hdc);
+
+  _tcsncpy_s(lf.lfFaceName, _countof(lf.lfFaceName), m_FaceName, _countof(lf.lfFaceName) - 1);
+  lf.lfFaceName[_countof(lf.lfFaceName) - 1] = 0;
+  lf.lfWidth = lf.lfEscapement = lf.lfOrientation = 0;
+  lf.lfItalic = lf.lfUnderline = lf.lfStrikeOut = 0;
+  lf.lfWeight = (m_lfWeight >= FW_SEMIBOLD ? FW_BOLD : FW_NORMAL);
+  lf.lfCharSet = DEFAULT_CHARSET;
+  lf.lfOutPrecision = OUT_DEFAULT_PRECIS;
+  lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+  lf.lfQuality = DEFAULT_QUALITY;
+  lf.lfPitchAndFamily = FF_DONTCARE; // | FIXED_PITCH
+
+  ZeroMemory(&cf, sizeof(cf));
+  cf.lStructSize = sizeof(cf);
+  cf.hwndOwner = m_hWnd;
+  cf.lpLogFont = &lf;
+  cf.Flags = CF_FORCEFONTEXIST | CF_INITTOLOGFONTSTRUCT | CF_SCREENFONTS | CF_INACTIVEFONTS;// | CF_FIXEDPITCHONLY;
+
+  if (ChooseFont(&cf)) {
+    m_FontSize = cf.iPointSize / 10;
+    _tcsncpy_s(m_FaceName, _countof(m_FaceName), lf.lfFaceName, _countof(m_FaceName) - 1);
+    m_FaceName[LF_FACESIZE - 1] = 0;
+    m_lfWeight = (lf.lfWeight >= FW_SEMIBOLD ? FW_BOLD : FW_NORMAL);
+    SetFontLabel();
+  }
+
+  return 0;
 }
 
 LRESULT DlgSettings::OnCloseCmd(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-    if (wID == IDOK)
-    {
-        //save settings
-    }
-    routes.clear();
-    int count = m_RouteList.GetItemCount();
-    if (count > 0)
-    {
-        routes.reserve(count);
-        ROUTE r;
-        for (int i = 0; i < count; i++)
-        {
-            GetRoute(r, i);
-            routes.push_back(r);
-        }
-    }
-    EndDialog(wID);
-    return 0;
+  if (wID == IDOK)
+  {
+      gSettings.SetUIFont(m_FaceName, m_lfWeight, m_FontSize);
+  }
+  EndDialog(wID);
+  return 0;
 }
 
-void DlgSettings::GetRoute(ROUTE& r, int i)
-{
-    CString str;
-    m_RouteList.GetItemText(i, 0, str);
-    r.name = str;
-    m_RouteList.GetItemText(i, 1, str);
-    r.local_port = atoi(str);
-    m_RouteList.GetItemText(i, 2, str);
-    r.remote_port = atoi(str);
-    m_RouteList.GetItemText(i, 3, str);
-    r.remote_addr = str;
-}
-
-void DlgSettings::SetRoute(const ROUTE& r, int nItem)
-{
-    m_RouteList.SetItem(nItem, 0, LVIF_TEXT, r.name.c_str(), 0, 0, 0, 0);
-    m_RouteList.SetItem(nItem, 1, LVIF_TEXT, Helpers::int2char(r.local_port), 0, 0, 0, 0);
-    m_RouteList.SetItem(nItem, 2, LVIF_TEXT, Helpers::int2char(r.remote_port), 0, 0, 0, 0);
-    m_RouteList.SetItem(nItem, 3, LVIF_TEXT, r.remote_addr.c_str(), 0, 0, 0, 0);
-    m_RouteList.SelectItem(nItem);
-}
-
-void DlgSettings::AddRoute(const ROUTE& r)
-{
-    int nItem = m_RouteList.GetItemCount();
-    m_RouteList.AddItem(nItem, 0, "");
-    SetRoute(r, nItem);
-}
-
-LRESULT DlgSettings::OnCmdButtonAdd(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
-{
-    ROUTE r;
-    DlgRoute dlg(&r);
-    if (IDOK == dlg.DoModal())
-    {
-        AddRoute(dlg.m_route);
-    }
-    return 0;
-}
-
-LRESULT DlgSettings::OnCmdButtonEdit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
-{
-    int nItem = m_RouteList.GetSelectedIndex();
-    if (nItem >= 0)
-    {
-        ROUTE r;
-        GetRoute(r, nItem);
-        DlgRoute dlg(&r);
-        if (IDOK == dlg.DoModal())
-        {
-            SetRoute(dlg.m_route, nItem);
-        }
-    }
-    return 0;
-}
-
-LRESULT DlgSettings::OnCmdButtonDelete(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
-{
-    int nItem = m_RouteList.GetSelectedIndex();
-    if (nItem >= 0)
-    {
-        m_RouteList.DeleteItem(nItem);
-        if (nItem > 0)
-            m_RouteList.SelectItem(nItem - 1);
-        else if (m_RouteList.GetItemCount() > 0)
-            m_RouteList.SelectItem(0);
-    }
-    return 0;
-}

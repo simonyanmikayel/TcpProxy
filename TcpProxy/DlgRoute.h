@@ -10,7 +10,7 @@ public:
     }
     enum { IDD = IDD_ROUTE };
 
-    BEGIN_MSG_MAP(DlgSettings)
+    BEGIN_MSG_MAP(DlgRouteTable)
         MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
         COMMAND_ID_HANDLER(IDOK, OnCloseCmd)
         COMMAND_ID_HANDLER(IDCANCEL, OnCloseCmd)

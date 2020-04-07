@@ -41,8 +41,6 @@ private:
     std::vector<T> val;
 };
 
-
-
 struct INT_VALUE
 {
     friend class CSettings;
@@ -54,6 +52,17 @@ private:
     int val;
 };
 
+struct STR_VALUE
+{
+	friend class CSettings;
+	void Set(char* val);
+	const char* Get() { return val.c_str(); }
+private:
+	STR_VALUE(LPCTSTR sz, const char* defVal);
+	LPCTSTR szRegKey;
+	std::string val;
+};
+
 class CSettings : public CRegKeyExt
 {
 public:
@@ -62,11 +71,21 @@ public:
 
     INT_VALUE vertSplitterPos;
     ARR_VALUE<ROUTE> routes;
+	INT_VALUE fontSize;
+	STR_VALUE fontName;
+	INT_VALUE fontWeight;
+
 
     void RestoreWindPos(HWND hWnd);
     void SaveWindPos(HWND hWnd);
+	void SetUIFont(CHAR* lfFaceName, LONG lfWeight, LONG size);
+	HFONT GetFont() { return m_Font; }
 
 private:
+	HFONT m_Font = 0;
+	LOGFONT   m_logFont;
+	void InitFont();
+	void DeleteFont();
 };
 
 extern CSettings gSettings;

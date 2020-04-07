@@ -11,11 +11,13 @@ DWORD Connection::m_ID = 0;
 
 void Connection::onConnect()
 {
+	opened = true;
 	GetLocalTime(&connectTime);
 	CONN_NODE* pNode = gArchive.getConnection(this);
 	if (pNode)
 	{
 		pNode->connectTime = connectTime;
+		pNode->opened = 1;
 		SOCKADDR_IN clientAddr;
 		int nClientAddrLen = sizeof(clientAddr);
 		if (getpeername(m_AcceptSocket.m_s, (LPSOCKADDR)&clientAddr, &nClientAddrLen) != SOCKET_ERROR)
@@ -23,7 +25,7 @@ void Connection::onConnect()
 			strncpy_s(pNode->peername, inet_ntoa(clientAddr.sin_addr), _countof(pNode->peername) - 1);
 		}
 		if (pNode->posInTree && pNode->parent && pNode->parent->expanded)
-			::PostMessage(hwndMain, WM_UPDATE_TREE, (WPARAM)pNode->posInTree, (LPARAM)0);
+			::PostMessage(hwndMain, WM_UPDATE_TREE, (WPARAM)pNode->posInTree, (LPARAM)pNode->posInTree);
 	}
 }
 
@@ -33,7 +35,7 @@ void Connection::onRecv()
 	if (pNode)
 	{
 		if (pNode->posInTree && pNode->parent && pNode->parent->expanded)
-			::PostMessage(hwndMain, WM_UPDATE_TREE, (WPARAM)pNode->posInTree, (LPARAM)0);
+			::PostMessage(hwndMain, WM_UPDATE_TREE, (WPARAM)pNode->posInTree, (LPARAM)pNode->posInTree);
 	}
 }
 
@@ -54,7 +56,7 @@ void Connection::onClose(IO_ACTION action)
 			pNode->action = action;
 			pNode->closeTime = closeTime;
 			if (pNode->posInTree && pNode->parent && pNode->parent->expanded)
-				::PostMessage(hwndMain, WM_UPDATE_TREE, (WPARAM)pNode->posInTree, (LPARAM)0);
+				::PostMessage(hwndMain, WM_UPDATE_TREE, (WPARAM)pNode->posInTree, (LPARAM)pNode->posInTree);
 		}
 	}
 }

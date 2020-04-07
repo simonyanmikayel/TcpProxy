@@ -61,6 +61,7 @@ struct Connection
     SYSTEMTIME connectTime = {0};
     SYSTEMTIME closeTime = { 0 };
 private:
+    boolean opened = false;
     boolean closed = false;
     static DWORD m_ID;
     DWORD m_id = (++m_ID);

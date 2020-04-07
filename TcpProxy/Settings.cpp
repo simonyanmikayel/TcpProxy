@@ -19,6 +19,31 @@ void INT_VALUE::Set(int val)
 	gSettings.WriteINT(szRegKey, val);
 }
 
+STR_VALUE::STR_VALUE(LPCTSTR sz, const char* defVal) : szRegKey(sz)
+{
+	DWORD cbData, dwDataTye;
+	gSettings.CheckData(szRegKey, &cbData, &dwDataTye);
+	if (dwDataTye == REG_SZ && cbData > 0 && cbData < MAX_DATA_SIZE)
+	{
+		std::string str;
+		str.resize(cbData);
+		if (gSettings.ReadSTR(szRegKey, (char*)str.c_str(), (int)cbData))
+		{
+			val = str;
+		}
+	}
+	if (val.empty() && defVal)
+	{
+		val = defVal;
+	}
+}
+
+void STR_VALUE::Set(char* val)
+{
+	this->val = val;
+	gSettings.WriteSTR(szRegKey, val);
+}
+
 template<typename T> 
 ARR_VALUE<T>::ARR_VALUE(LPCTSTR sz) : szRegKey(sz)
 {
@@ -49,16 +74,56 @@ ARR_VALUE<T>::ARR_VALUE(LPCTSTR sz) : szRegKey(sz)
 	}
 }
 
+static const int DefFontSize = 12;
+static const CHAR* DEF_FONT_NAME = _T("Consolas"); //Courier New //Consolas //Inconsolata
+
 CSettings::CSettings() 
 	: CRegKeyExt(STR_APP_REG_KEY)
 	, vertSplitterPos(_T("vertSplitterPos"), 50)
 	, routes(_T("routes"))
+	, fontSize(_T("fontSize"), DefFontSize)
+	, fontWeight(_T("fontWeight"), FW_NORMAL)
+	, fontName(_T("fontName"), DEF_FONT_NAME)
 {
-
+	InitFont();
 }
 
 CSettings::~CSettings()
 {
+	DeleteFont();
+}
+
+void CSettings::SetUIFont(CHAR* lfFaceName, LONG lfWeight, LONG size)
+{
+	fontSize.Set(size);
+	fontName.Set(lfFaceName);
+	fontWeight.Set(lfWeight);
+	InitFont();
+}
+
+void CSettings::InitFont()
+{
+	DeleteFont();
+
+	ZeroMemory(&m_logFont, sizeof(LOGFONT));
+
+	strncpy_s(m_logFont.lfFaceName, fontName.Get(), LF_FACESIZE);
+	m_logFont.lfWeight = fontWeight.Get();
+	HDC hdc = CreateIC(TEXT("DISPLAY"), NULL, NULL, NULL);
+	m_logFont.lfHeight = -MulDiv(fontSize.Get(), GetDeviceCaps(hdc, LOGPIXELSY), 72);
+	m_logFont.lfQuality = CLEARTYPE_NATURAL_QUALITY; //ANTIALIASED_QUALITY
+
+	m_Font = CreateFontIndirect(&m_logFont);
+
+	DeleteDC(hdc);
+}
+
+void CSettings::DeleteFont()
+{
+	if (m_Font) {
+		DeleteObject(m_Font);
+		m_Font = NULL;
+	}
 }
 
 void CSettings::RestoreWindPos(HWND hWnd)

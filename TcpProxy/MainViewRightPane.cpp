@@ -16,6 +16,11 @@ LRESULT CMainViewRightPane::OnCreate(LPCREATESTRUCT lpcs)
 	return 0; // windows sets focus to first control
 }
 
+void CMainViewRightPane::ApplySettings()
+{
+
+}
+
 LRESULT CMainViewRightPane::OnPositionChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	SetChiledPos();
@@ -49,3 +54,4 @@ void CMainViewRightPane::Clear()
 {
 	//TODO
 }
+

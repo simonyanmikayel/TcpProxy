@@ -3,6 +3,7 @@
 #include "aboutdlg.h"
 #include "Settings.h"
 #include "Proxy.h"
+#include "DlgRouteTable.h"
 #include "DlgSettings.h"
 
 HWND  hwndMain;
@@ -73,7 +74,7 @@ LRESULT CMainFrame::OnActivate(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, 
         gSettings.RestoreWindPos(m_hWnd);
 
         PostMessage(WM_COMMAND, ID_VIEW_STARTPROXY, 0);
-        //PostMessage(WM_COMMAND, ID_VIEW_PROXYSETTINGS, 0);
+        //PostMessage(WM_COMMAND, ID_VIEW_ROUTE_TABLSE, 0);
     }
 
     return 0;
@@ -130,9 +131,9 @@ LRESULT CMainFrame::OnClearLog(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCt
     return 0;
 }
 
-LRESULT CMainFrame::OnProxySettings(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+LRESULT CMainFrame::OnRouteTable(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-    DlgSettings dlg; 
+    DlgRouteTable dlg;
     dlg.DoModal();
     auto& v1 = dlg.routes;
     auto& v2 = gSettings.routes.Get();
@@ -159,6 +160,16 @@ LRESULT CMainFrame::OnProxySettings(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*h
     return 0;
 }
 
+LRESULT CMainFrame::OnProxySettings(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    DlgSettings dlg;
+    if (IDOK == dlg.DoModal())
+    {
+        m_view.ApplySettings();
+    }
+    return 0;
+}
+
 LRESULT CMainFrame::onShowMsg(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
     CHAR* buf = (CHAR*)wParam;
@@ -167,9 +178,12 @@ LRESULT CMainFrame::onShowMsg(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, B
     return true;
 }
 
-LRESULT CMainFrame::onUpdateTree(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+LRESULT CMainFrame::onUpdateTree(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
 {
-    m_view.m_wndTreeView.RedrawItems((int)wParam, (int)wParam);
+    int nFirst = (int)wParam;
+    int nLast = (int)lParam;
+    if (nFirst > 0 && nLast > 0)
+        m_view.m_wndTreeView.RedrawItems(nFirst, nLast);
     return true;
 }
 

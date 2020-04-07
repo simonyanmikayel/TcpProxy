@@ -60,12 +60,18 @@ int LOG_NODE::getTreeImage()
     }
     else if (isConn())
     {
-        return 2;//IDI_ICON_TREE_CONN
+        CONN_NODE* This = (CONN_NODE*)this;
+        if (This->closed)
+            return 4;//IDI_ICON_TREE_CONN_CLOSED
+        else if (This->opened)
+            return 3;//IDI_ICON_TREE_CONN_CONNECTED
+        else
+            return 2;//IDI_ICON_TREE_CONN_INITIAL
     }
     else if (isRecv())
     {
         RECV_NODE* This = (RECV_NODE*)this;
-        return This->isLocal ? 3 : 4;//IDI_ICON_TREE_RECV_LOCAL or IDI_ICON_TREE_RECV_REMOTE
+        return This->isLocal ? 5 : 6;//IDI_ICON_TREE_RECV_LOCAL or IDI_ICON_TREE_RECV_REMOTE
     }
     else
     {
@@ -85,7 +91,7 @@ CHAR* LOG_NODE::getTreeText(int* cBuf)
 #endif
     if (this == gArchive.getRootNode())
     {
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT(""));
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT("   "));
     }
     else if (isRouter())
     {

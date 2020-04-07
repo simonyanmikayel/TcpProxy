@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "MainView.h"
+#include "Settings.h"
 #include "LogTreeView.h"
 
 enum STATE_IMAGE { STATE_IMAGE_COLAPSED, STATE_IMAGE_EXPANDED, STATE_IMAGE_CHECKED, STATE_IMAGE_UNCHECKE };
@@ -16,9 +17,11 @@ CLogTreeView::CLogTreeView(CMainView* pView)
 
 	ImageList_AddIcon(m_hTypeImageList, LoadIcon(_Module.get_m_hInst(), MAKEINTRESOURCE(IDI_ICON_TREE_ROOT))); //0
 	ImageList_AddIcon(m_hTypeImageList, LoadIcon(_Module.get_m_hInst(), MAKEINTRESOURCE(IDI_ICON_TREE_ROUTE))); //1
-	ImageList_AddIcon(m_hTypeImageList, LoadIcon(_Module.get_m_hInst(), MAKEINTRESOURCE(IDI_ICON_TREE_CONN))); //2
-	ImageList_AddIcon(m_hTypeImageList, LoadIcon(_Module.get_m_hInst(), MAKEINTRESOURCE(IDI_ICON_TREE_RECV_LOCAL))); //3
-	ImageList_AddIcon(m_hTypeImageList, LoadIcon(_Module.get_m_hInst(), MAKEINTRESOURCE(IDI_ICON_TREE_RECV_REMOTE))); //4
+	ImageList_AddIcon(m_hTypeImageList, LoadIcon(_Module.get_m_hInst(), MAKEINTRESOURCE(IDI_ICON_TREE_CONN_INITIAL))); //2
+	ImageList_AddIcon(m_hTypeImageList, LoadIcon(_Module.get_m_hInst(), MAKEINTRESOURCE(IDI_ICON_TREE_CONN_CONNECTED))); //3
+	ImageList_AddIcon(m_hTypeImageList, LoadIcon(_Module.get_m_hInst(), MAKEINTRESOURCE(IDI_ICON_TREE_CONN_CLOSED))); //4
+	ImageList_AddIcon(m_hTypeImageList, LoadIcon(_Module.get_m_hInst(), MAKEINTRESOURCE(IDI_ICON_TREE_RECV_LOCAL))); //5
+	ImageList_AddIcon(m_hTypeImageList, LoadIcon(_Module.get_m_hInst(), MAKEINTRESOURCE(IDI_ICON_TREE_RECV_REMOTE))); //6
 
 	m_colWidth = min_colWidth;
 	m_Initialised = false;
@@ -42,6 +45,11 @@ CLogTreeView::~CLogTreeView()
 	DeleteDC(m_hdc);
 }
 
+void CLogTreeView::ApplySettings()
+{
+	SetFont(gSettings.GetFont());
+	SelectObject(m_hdc, gSettings.GetFont());
+}
 int CLogTreeView::ItemByPos(int yPos)
 {
 	CRect rcItem = { 0 };
@@ -156,7 +164,11 @@ void CLogTreeView::ShowItem(DWORD i, bool scrollToMiddle)
 
 void CLogTreeView::SetSelectedNode(LOG_NODE* pNode)
 {
-	m_pSelectedNode = pNode;
+	if (m_pSelectedNode != pNode)
+	{
+		m_pSelectedNode = pNode;
+		m_pView->OnSelectionChanged(pNode);
+	}
 }
 
 LRESULT CLogTreeView::OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
@@ -697,3 +709,4 @@ void CLogTreeView::DrawSubItem(int iItem, int iSubItem, HDC hdc, RECT rcItem)
 	::SetBkColor(hdc, old_bkColor);
 	::SetBkMode(hdc, old_bkMode);
 }
+

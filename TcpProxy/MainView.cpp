@@ -6,7 +6,6 @@ CMainView::CMainView()
 	: m_wndTreeView(this)
 	, m_RightPane(this)
 {
-
 }
 
 BOOL CMainView::PreTranslateMessage(MSG* pMsg)
@@ -33,6 +32,7 @@ LRESULT CMainView::OnCreate(LPCREATESTRUCT lpcs)
 	m_wndVertSplitter.SetSplitterPosPct(std::max(10, std::min(90, gSettings.vertSplitterPos.Get())), false);
 	m_wndVertSplitter.m_bFullDrag = false;
 
+	ApplySettings();
 	return 0; // windows sets focus to first control
 }
 
@@ -101,3 +101,14 @@ void CMainView::ClearLog()
 	m_wndTreeView.Clear();
 	m_RightPane.Clear();
 }
+
+void CMainView::ApplySettings()
+{
+	m_wndTreeView.ApplySettings();
+	m_RightPane.ApplySettings();
+}
+void CMainView::OnSelectionChanged(LOG_NODE* pNode)
+{
+
+}
+

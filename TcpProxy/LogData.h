@@ -88,6 +88,7 @@ struct CONN_NODE : LOG_NODE
     DWORD id;
     DWORD cSend;
     DWORD cRecvd;
+    BYTE  opened;
     BYTE  closed;
     char peername[32];
     IO_ACTION action;

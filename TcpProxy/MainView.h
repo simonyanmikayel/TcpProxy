@@ -26,7 +26,9 @@ public:
     LRESULT OnPositionChanging(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
     LRESULT OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
     LRESULT OnCustomDraw(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/);
+    void OnSelectionChanged(LOG_NODE* pNode);
     void ClearLog();
+    void ApplySettings();
 
     CSplitterWindow m_wndVertSplitter;
     CLogTreeView m_wndTreeView;

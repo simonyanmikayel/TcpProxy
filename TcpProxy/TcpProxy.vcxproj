@@ -163,7 +163,9 @@
     <ClInclude Include="Archive.h" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="DlgRoute.h" />
+    <ClInclude Include="DlgRouteTable.h" />
     <ClInclude Include="DlgSettings.h" />
+    <ClInclude Include="FontPreviewCombo.h" />
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="LogData.h" />
     <ClInclude Include="MainFrame.h" />
@@ -182,7 +184,9 @@
     <ClCompile Include="AboutDlg.cpp" />
     <ClCompile Include="Archive.cpp" />
     <ClCompile Include="DlgRoute.cpp" />
+    <ClCompile Include="DlgRouteTable.cpp" />
     <ClCompile Include="DlgSettings.cpp" />
+    <ClCompile Include="FontPreviewCombo.cpp" />
     <ClCompile Include="Helpers.cpp" />
     <ClCompile Include="LogData.cpp" />
     <ClCompile Include="MainFrame.cpp" />
@@ -206,8 +210,18 @@
     <ResourceCompile Include="TcpProxy.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\icon1.ico" />
+    <Image Include="res\ICON_TREE_CONN.ico" />
+    <Image Include="res\ICON_TREE_RECV_LOCAL.ico" />
+    <Image Include="res\ICON_TREE_RECV_REMOTE.ico" />
+    <Image Include="res\ICON_TREE_ROOT.ico" />
+    <Image Include="res\ICON_TREE_ROUTE.ico" />
     <Image Include="res\TcpProxy.ico" />
     <Image Include="res\Toolbar.bmp" />
+    <Image Include="res\tree_node_checked.ico" />
+    <Image Include="res\tree_node_colapsed.ico" />
+    <Image Include="res\tree_node_expanded.ico" />
+    <Image Include="res\tree_node_unchecked.ico" />
     <Image Include="small.ico" />
     <Image Include="TcpProxy.ico" />
   </ItemGroup>

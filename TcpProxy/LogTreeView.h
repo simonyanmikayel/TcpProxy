@@ -37,6 +37,7 @@ public:
 
 	DWORD GetRecCount() { return m_recCount; }
 	LOG_NODE* GetSelectedNode() { return m_pSelectedNode; }
+	void ApplySettings();
 
 private:
 	LOG_NODE* getTreeNode(int iItem, int* pOffset = NULL);
