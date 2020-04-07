@@ -29,6 +29,7 @@ public:
     void OnSelectionChanged(LOG_NODE* pNode);
     void ClearLog();
     void ApplySettings();
+    void OnParentCreat();
 
     CSplitterWindow m_wndVertSplitter;
     CLogTreeView m_wndTreeView;

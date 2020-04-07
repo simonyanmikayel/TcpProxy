@@ -89,7 +89,7 @@ CHAR* LOG_NODE::getTreeText(int* cBuf)
 #ifdef _DEBUG
     //cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT("[%d %d %d]"), GetExpandCount(), line, lastChild ? lastChild->index : 0);
 #endif
-    if (this == gArchive.getRootNode())
+    if (isRoot())
     {
         cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT("   "));
     }

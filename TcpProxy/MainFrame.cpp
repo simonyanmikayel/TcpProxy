@@ -214,7 +214,11 @@ void CMainFrame::StartLogging()
 void CMainFrame::StopLogging()
 {
     KillTimer(TIMER_DATA_REFRESH);
+    gArchive.lock();
     gProxy.Stop();
+    gArchive.clearArchive();
+    m_view.ClearLog();
+    gArchive.unlock();
     RefreshLog();
 }
 

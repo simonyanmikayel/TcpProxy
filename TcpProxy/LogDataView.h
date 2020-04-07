@@ -1,7 +1,7 @@
 #pragma once
 
 class CMainView;
-class CLogDataView : public CWindowImpl<CLogDataView, CRichEditCtrl>
+class CLogDataView : public CWindowImpl<CLogDataView, CEdit> //CEdit CRichEditCtrl
 {
 public:
 	DECLARE_WND_CLASS(NULL)
@@ -9,14 +9,11 @@ public:
 	CLogDataView(CMainView* pView);
 
 	BEGIN_MSG_MAP(CLogListFrame)
-		MSG_WM_CREATE(OnCreate)
-		MESSAGE_HANDLER(WM_WINDOWPOSCHANGED, OnPositionChanged)
 	END_MSG_MAP()
 
-	LRESULT OnCreate(LPCREATESTRUCT lpcs);
-	LRESULT OnPositionChanged(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/);
-	void SetChiledPos();
 	void Clear();
 	void ApplySettings();
+	void OnSelectionChanged(LOG_NODE* pNode);
+	void OnParentCreat();
 };
 

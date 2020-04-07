@@ -23,17 +23,25 @@ LRESULT CMainView::OnCreate(LPCREATESTRUCT lpcs)
 	m_wndVertSplitter.Create(m_hWnd, rcDefault, NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, SPLIT_PROPORTIONAL);
 
 	m_wndTreeView.Create(m_wndVertSplitter, rcDefault, NULL,
-		WS_CHILD | WS_BORDER | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
+		WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
 		LVS_REPORT | LVS_AUTOARRANGE | LVS_SHOWSELALWAYS | LVS_SHAREIMAGELISTS | LVS_OWNERDATA | LVS_NOCOLUMNHEADER,
 		LVS_EX_FULLROWSELECT);
-	m_wndDataView.Create(m_wndVertSplitter, rcDefault, NULL, WS_CHILD | WS_BORDER | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0);
+	m_wndDataView.Create(m_wndVertSplitter, rcDefault, NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | 
+		WS_VSCROLL | WS_HSCROLL |
+		ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | ES_MULTILINE, 0);
 
 	m_wndVertSplitter.SetSplitterPanes(m_wndTreeView, m_wndDataView);
 	m_wndVertSplitter.SetSplitterPosPct(std::max(10, std::min(90, gSettings.vertSplitterPos.Get())), false);
 	m_wndVertSplitter.m_bFullDrag = false;
 
+	OnParentCreat();
 	ApplySettings();
 	return 0; // windows sets focus to first control
+}
+
+void CMainView::OnParentCreat()
+{
+	m_wndDataView.OnParentCreat();
 }
 
 LRESULT CMainView::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
@@ -109,6 +117,6 @@ void CMainView::ApplySettings()
 }
 void CMainView::OnSelectionChanged(LOG_NODE* pNode)
 {
-
+	m_wndDataView.OnSelectionChanged(pNode);
 }
 

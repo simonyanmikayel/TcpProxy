@@ -55,8 +55,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 	::DefWindowProc(NULL, 0, 0, 0L);
 
 	AtlInitCommonControls(ICC_COOL_CLASSES | ICC_BAR_CLASSES);	// add flags to support other controls
-	HINSTANCE hInstRich = ::LoadLibrary(CRichEditCtrl::GetLibraryName());
-	ATLASSERT(hInstRich != NULL);
+	//HINSTANCE hInstRich = ::LoadLibrary(CRichEditCtrl::GetLibraryName());
+	//ATLASSERT(hInstRich != NULL);
 	hRes = _Module.Init(NULL, hInstance);
 	ATLASSERT(SUCCEEDED(hRes));
 
