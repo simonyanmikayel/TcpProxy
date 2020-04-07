@@ -35,6 +35,8 @@
 #define IDC_EDIT_REMOTE_PORT            1006
 #define IDC_EDIT4                       1007
 #define IDC_EDIT_REMOTE_ADDR            1007
+#define ID_TREE_EXPAND_ALL              32771
+#define ID_TREE_COLLAPSE_ALL            32772
 
 // Next default values for new objects
 // 
@@ -42,7 +44,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        144
-#define _APS_NEXT_COMMAND_VALUE         32771
+#define _APS_NEXT_COMMAND_VALUE         32773
 #define _APS_NEXT_CONTROL_VALUE         1008
 #define _APS_NEXT_SYMED_VALUE           110
 #endif

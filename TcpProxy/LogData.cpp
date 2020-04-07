@@ -119,3 +119,45 @@ CHAR* LOG_NODE::getTreeText(int* cBuf, bool extened)
         *cBuf = cb;
     return ret;
 }
+
+void LOG_NODE::CollapseExpandAll(bool expand)
+{
+    //stdlog("CollapseExpandAll %d\n", GetTickCount());
+    LOG_NODE* pNode = this;
+    LOG_NODE* pNode0 = pNode;
+    do
+    {
+        pNode->expanded = (pNode->lastChild && expand) ? 1 : 0;
+
+        if (pNode->firstChild)
+        {
+            pNode = pNode->firstChild;
+        }
+        else if (pNode->nextSibling)
+        {
+            pNode = pNode->nextSibling;
+        }
+        else
+        {
+            while (pNode->parent)
+            {
+                pNode = pNode->parent;
+                if (pNode == pNode0)
+                    break;
+                if (pNode->nextSibling)
+                {
+                    pNode = pNode->nextSibling;
+                    break;
+                }
+            }
+        }
+    } while (pNode0 != pNode);
+    //stdlog("CollapseExpandAll %d\n", GetTickCount());
+    CalcLines();
+}
+
+void LOG_NODE::CollapseExpand(BOOL expand)
+{
+    expanded = expand;
+    CalcLines();
+}

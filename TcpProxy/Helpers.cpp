@@ -58,5 +58,15 @@ namespace Helpers
     {
         gMainFrame->UpdateStatusBar();
     }
+
+    void AddMenu(HMENU hMenu, int& cMenu, int ID_MENU, LPCTCH str, bool disable)
+    {
+        DWORD dwFlags;
+        dwFlags = MF_BYPOSITION | MF_STRING;
+        if (disable)
+            dwFlags |= MF_DISABLED;
+        InsertMenu(hMenu, cMenu++, dwFlags, ID_MENU, str);
+    }
+
 };
 

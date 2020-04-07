@@ -202,6 +202,7 @@ void CMainFrame::ClearLog()
 {
     gArchive.clearArchive();
     m_view.ClearLog();
+    gProxy.ShowRoutes();
 }
 
 void CMainFrame::UpdateStatusBar()

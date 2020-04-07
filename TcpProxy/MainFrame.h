@@ -5,8 +5,6 @@
 #include "resource.h"
 #include "MainView.h"
 
-extern HWND hwndMain;
-
 class CMainFrame :
     public CFrameWindowImpl<CMainFrame>,
     public CUpdateUI<CMainFrame>,

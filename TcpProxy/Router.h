@@ -13,35 +13,37 @@ inline char* SocketTypeNmae(SOCKET_TYPE i) {
     return r;
 }
 
-enum class IO_TYPE { NONE, ACCEPT, CONNECT, RECV, SEND, LAST};
-inline char* IoTypeNmae(IO_TYPE i) { 
+enum class IO_ACTION { NONE, ACCEPT, CONNECT, RECV, SEND, PROXY_STOP };
+inline char* IoTypeNmae(IO_ACTION i) { 
     char* r = "?";  
-    if (i == IO_TYPE::NONE) r = "IO_TYPE::NONE"; 
-    else if (i == IO_TYPE::ACCEPT) r = "IO_TYPE::ACCEPT";
-    else if (i == IO_TYPE::CONNECT) r = "IO_TYPE::CONNECT";
-    else if (i == IO_TYPE::RECV) r = "IO_TYPE::RECV";
-    else if (i == IO_TYPE::SEND) r = "IO_TYPE::SEND";
+    if (i == IO_ACTION::NONE) r = "IO_ACTION::NONE"; 
+    else if (i == IO_ACTION::ACCEPT) r = "IO_ACTION::ACCEPT";
+    else if (i == IO_ACTION::CONNECT) r = "IO_ACTION::CONNECT";
+    else if (i == IO_ACTION::RECV) r = "IO_ACTION::RECV";
+    else if (i == IO_ACTION::SEND) r = "IO_ACTION::SEND";
     return r; 
 }
 
 struct Socket : WSAOVERLAPPED
 {
-    Socket(Connection* pConnection) : m_pConnection(pConnection), m_s(INVALID_SOCKET), m_io_type(IO_TYPE::NONE), This(this){ ENTER_FUNC(); memset(this, 0, sizeof(WSAOVERLAPPED)); }
-    ~Socket() { ENTER_FUNC(); close(); }
-    void close() { ENTER_FUNC(); if (m_s != INVALID_SOCKET) { closesocket(m_s), m_s = INVALID_SOCKET; } }
+    friend struct Connection;
+    Socket(Connection* pConnection) : m_pConnection(pConnection), m_s(INVALID_SOCKET), m_io_action(IO_ACTION::NONE), This(this){ ENTER_FUNC(); memset(this, 0, sizeof(WSAOVERLAPPED)); }
+    ~Socket() { ENTER_FUNC(); CloseSocket(); }
     SOCKET m_s;
-    IO_TYPE m_io_type;
+    IO_ACTION m_io_action;
     Connection* m_pConnection;
     void* This;
     static const int bufSize = 1024 * 128;
     char buf[bufSize];
+private:
+    void CloseSocket() { ENTER_FUNC(); if (m_s != INVALID_SOCKET) { closesocket(m_s), m_s = INVALID_SOCKET; } }
 };
 
 struct Connection
 {
-    Connection(Router* pRouter) : m_pRouter(pRouter), m_AcceptSocket(this), m_ConnectSocket(this), err(0), m_io_type(IO_TYPE::NONE), m_id(++m_ID) { ENTER_FUNC(); }
-    ~Connection() { ENTER_FUNC(); }
-    void close() { ENTER_FUNC(); m_AcceptSocket.close(); m_ConnectSocket.close(); }
+    Connection(Router* pRouter) : m_pRouter(pRouter), m_AcceptSocket(this), m_ConnectSocket(this) { ENTER_FUNC(); GetLocalTime(&initTime); }
+    ~Connection() { ENTER_FUNC(); m_AcceptSocket.CloseSocket(); m_ConnectSocket.CloseSocket(); }
+    void close(IO_ACTION action);
     SOCKET_TYPE SocketType(const Socket* pSocket) { return pSocket == &m_AcceptSocket ? SOCKET_TYPE::ACCEPT : SOCKET_TYPE::CONNECT; }
     Socket* GetPear(Socket* pSocket) { return pSocket == &m_AcceptSocket ? &m_ConnectSocket : &m_AcceptSocket; }
     boolean IsAccepSocket(Socket* pSocket) { return pSocket == &m_AcceptSocket; }
@@ -50,11 +52,14 @@ struct Connection
     Router* m_pRouter;
     Socket m_AcceptSocket;
     Socket m_ConnectSocket;
-    ULONG_PTR err;
-    IO_TYPE m_io_type;
+    ULONG_PTR m_err = 0;
+    IO_ACTION m_io_action = IO_ACTION::NONE;
+    SYSTEMTIME initTime;
+    SYSTEMTIME closeTime;
 private:
+    boolean closed = false;
     static DWORD m_ID;
-    DWORD m_id;
+    DWORD m_id = (++m_ID);
 };
 
 class Router

@@ -10,6 +10,7 @@ public:
     boolean Start(const std::vector<ROUTE>& routes);
     void Stop();
     void AddRoute(const ROUTE& r);
+    void ShowRoutes();
     boolean Running() { return m_hIoCompPort != NULL; }
     HANDLE GetIoCompletionPort() { return m_hIoCompPort; }
 

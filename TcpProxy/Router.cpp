@@ -2,11 +2,34 @@
 #include "Helpers.h"
 #include "wsock.h"
 #include "Router.h"
+#include "Archive.h"
 
 //https://docs.microsoft.com/en-us/windows/win32/api/mswsock/nf-mswsock-acceptex
 
 DWORD Router::m_ID = 0;
 DWORD Connection::m_ID = 0;
+
+void Connection::close(IO_ACTION action) 
+{ 
+	ENTER_FUNC(); 
+	if (!closed)
+	{
+		closed = true;
+		m_io_action = action;
+		m_AcceptSocket.CloseSocket();
+		m_ConnectSocket.CloseSocket();
+		GetLocalTime(&closeTime);
+		//gArchive.getNode
+		CONN_NODE* pNode = gArchive.getConnection(this);
+		if (pNode)
+		{
+			pNode->action = action;
+			pNode->closeTime = closeTime;
+			if (pNode->posInTree && pNode->parent && pNode->parent->expanded)
+				::PostMessage(hwndMain, WM_UPDATE_TREE, (WPARAM)pNode->posInTree, (LPARAM)0);
+		}
+	}
+}
 
 Router::Router(const ROUTE& r) :
 	m_Route{r}
@@ -100,7 +123,7 @@ boolean Router::DoAccept(HANDLE hIoCompPort)
 	const int addrBufLen = sizeof(sockaddr_in) + 16;
 	char lpOutputBuf[2* addrBufLen];
 	DWORD dwBytes = 0;
-	AcceptSocket.m_io_type = IO_TYPE::ACCEPT;
+	AcceptSocket.m_io_action = IO_ACTION::ACCEPT;
 	BOOL bRetVal = wsock::lpfnAcceptEx(
 		m_ListenSocket, 
 		AcceptSocket.m_s,
@@ -148,7 +171,7 @@ boolean Router::DoConnect(Connection* pConnection, HANDLE hIoCompPort)
 	server.sin_port = htons(m_Route.remote_port);
 	server.sin_addr.s_addr = inet_addr(m_Route.remote_addr.c_str());
 	STDLOG("Connecting to: %s:%d\n", inet_ntoa(server.sin_addr), m_Route.remote_port);
-	ConnectSocket.m_io_type = IO_TYPE::CONNECT;
+	ConnectSocket.m_io_action = IO_ACTION::CONNECT;
 	DWORD dwBytes = 0;
 	BOOL bRetVal = wsock::lpfnConnectEx(
 		ConnectSocket.m_s,
@@ -176,7 +199,7 @@ boolean Router::DoRecv(Socket* pSocket, HANDLE hIoCompPort)
 	ENTER_FUNC();
 	DWORD dwBytes = 0, dwFlags = 0;
 	WSABUF wsabuf = { pSocket->bufSize, pSocket->buf };
-	pSocket->m_io_type = IO_TYPE::RECV;
+	pSocket->m_io_action = IO_ACTION::RECV;
 	int Result = WSARecv(pSocket->m_s, &wsabuf, 1, &dwBytes, &dwFlags, pSocket, 0);
 
 	if (Result == SOCKET_ERROR) 
@@ -196,7 +219,7 @@ boolean Router::DoSend(Socket* pSocket, DWORD dwNumberOfBytes, char* buf, HANDLE
 	ENTER_FUNC();
 	DWORD dwBytes = 0, dwFlags = 0;
 	WSABUF wsabuf = { dwNumberOfBytes, buf };
-	pSocket->m_io_type = IO_TYPE::SEND;
+	pSocket->m_io_action = IO_ACTION::SEND;
 	int Result = WSASend(pSocket->m_s, &wsabuf, 1, &dwBytes, dwFlags, pSocket, 0);
 
 	if (Result == SOCKET_ERROR)
@@ -225,6 +248,6 @@ void Router::Stop()
 	closesocket(m_ListenSocket);
 	for (auto& p : m_connections)
 	{
-		p->close();
+		p->close(IO_ACTION::PROXY_STOP);
 	}
 }

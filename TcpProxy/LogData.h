@@ -67,6 +67,9 @@ struct LOG_NODE
     CHAR* getTreeText(int* cBuf = NULL, bool extened = true);
     int getTreeImage();
     int GetExpandCount() { return expanded ? cExpanded : 0; }
+    void CollapseExpandAll(bool expand);
+    void CollapseExpand(BOOL expand);
+    int GetPosInTree() { return posInTree; }
 };
 
 struct ROOT_NODE : LOG_NODE
@@ -83,6 +86,9 @@ struct ROUTER_NODE : LOG_NODE
 struct CONN_NODE : LOG_NODE
 {
     DWORD id;
+    IO_ACTION action;
+    SYSTEMTIME initTime;
+    SYSTEMTIME closeTime;
 };
 
 struct RECV_NODE : LOG_NODE

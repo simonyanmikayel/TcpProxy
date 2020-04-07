@@ -42,6 +42,89 @@ CLogTreeView::~CLogTreeView()
 	DeleteDC(m_hdc);
 }
 
+int CLogTreeView::ItemByPos(int yPos)
+{
+	CRect rcItem = { 0 };
+	GetSubItemRect(0, 0, LVIR_LABEL, &rcItem);
+
+	LVHITTESTINFO ht = { 0 };
+	ht.pt.x = rcItem.left;// xPos;
+	ht.pt.y = yPos;
+	ht.iItem = -1;
+
+	SubItemHitTest(&ht);
+	//stdlog("yPos = %d x = %d left = %d flags = %d ht.iItem = %d\n", yPos, ht.pt.x, rcItem.left, ht.flags, ht.iItem);
+	return ht.iItem;
+}
+
+int CLogTreeView::hitTest(LOG_NODE* pNode, int xPos, int offset)
+{
+	int x0 = offset * ICON_OFFSET;
+	int x1 = x0 + ICON_LEN;
+	if (pNode->lastChild) //has expand button
+	{
+		if (xPos >= x0 && xPos < x1)
+			return TVHT_ONITEMBUTTON;
+	}
+	return TVHT_ONITEM;
+}
+
+void CLogTreeView::CollapseExpandAll(LOG_NODE* pNode, bool expand)
+{
+	pNode->CollapseExpandAll(expand);
+	SetItemCount(gArchive.getRootNode()->GetExpandCount() + 1);
+	RedrawItems(0, gArchive.getRootNode()->GetExpandCount());
+}
+
+void CLogTreeView::EnsureItemVisible(int iItem)
+{
+	iItem = max(0, min(iItem, (int)m_recCount - 1));
+	int offset;
+	LOG_NODE* pNode = getTreeNode(iItem, &offset);
+	if (!pNode) { ATLASSERT(0); return; }
+
+	ShowItem(iItem, false);
+
+	RECT rcClient;// , rcItem;
+	GetClientRect(&rcClient);
+	//ListView_GetSubItemRect(m_hWnd, iItem, 0, LVIR_BOUNDS, &rcItem);
+	int cxClient = rcClient.right;// -rcItem.left;
+	//GetSubItemRect(iItem, 0, LVIR_BOUNDS, &rcItem);
+
+	int cbText;
+	char* szText = pNode->getTreeText(&cbText, false);
+
+	int cxText, xStart, xEnd;
+	GetNodetPos(m_hdc, offset, szText, cbText, cxText, xStart, xEnd);
+
+	SetColumnLen(xEnd);
+
+	SCROLLINFO si;
+	si.cbSize = sizeof(si);
+	si.fMask = SIF_RANGE | SIF_POS;
+	GetScrollInfo(SB_HORZ, &si);
+	//stdlog("cxClient: %d, xStart: %d, xEnd: %d, si.nPos: %d\n", cxClient, xStart, xEnd, si.nPos);
+
+	int cxRight = 0, cxleft = 0;
+	if (xEnd > cxClient + si.nPos - 16)
+	{
+		cxRight = xEnd - (si.nPos + cxClient - 16);
+		xStart -= cxRight;
+		//stdlog("cxRight: %d, xStart: %d\n", cxRight, xStart);
+	}
+	if (xStart < si.nPos)
+	{
+		cxleft = xStart - si.nPos;
+		//stdlog("cxleft: %d\n", cxleft);
+	}
+	if (cxRight + cxleft)
+	{
+		SIZE size = { cxRight + cxleft, 0 };
+		Scroll(size);
+	}
+	//stdlog("pNode = %p iItem = %d offset = %d cxleft = %d cxleft = %d xStart = %d cxText = %d xEnd = %d si.nPos = %d si.nMin = %d si.nMax = %d rcClient.left = %d rcClient.right = %d rcItem.left = %d rcItem.right = %d szText = %s\n", pNode, iItem, offset, cxleft, cxleft, xStart, cxText, xEnd, si.nPos, si.nMin, si.nMax, rcClient.left, rcClient.right, rcItem.left, rcItem.right, szText);
+}
+
 void CLogTreeView::OnSize(UINT nType, CSize size)
 {
 	m_size = size;
@@ -50,6 +133,302 @@ void CLogTreeView::OnSize(UINT nType, CSize size)
 		m_Initialised = true;
 		InsertColumn(0, "");
 	}
+}
+
+void CLogTreeView::ShowItem(DWORD i, bool scrollToMiddle)
+{
+	EnsureVisible(i, FALSE);
+	if (scrollToMiddle)
+	{
+		SIZE size = { 0, 0 };
+		RECT rect = { 0 };
+		GetClientRect(&rect);
+		size.cy = rect.bottom;
+		POINT pt;
+		GetItemPosition(i, &pt);
+		//if (pt.y > rect.bottom / 2)
+		{
+			size.cy = pt.y - rect.bottom / 2;
+			Scroll(size);
+		}
+	}
+}
+
+void CLogTreeView::SetSelectedNode(LOG_NODE* pNode)
+{
+	m_pSelectedNode = pNode;
+}
+
+LRESULT CLogTreeView::OnLButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	return 0;
+}
+
+LRESULT CLogTreeView::OnMButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	return OnLButtonDown(uMsg, wParam, lParam, bHandled);
+}
+
+LRESULT CLogTreeView::OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	if (GetFocus() != *this)
+		SetFocus();
+
+	bHandled = TRUE;
+
+	int xPos = GET_X_LPARAM(lParam);
+	int yPos = GET_Y_LPARAM(lParam);
+	int iItem = ItemByPos(yPos);
+
+	if (iItem >= 0)
+	{
+		int offset;
+		LOG_NODE* pNode = getTreeNode(iItem, &offset);
+		if (!pNode)
+		{
+			ATLASSERT(FALSE);
+			return 0;
+		}
+
+		CRect rcItem = { 0 };
+		GetSubItemRect(iItem, 0, LVIR_LABEL, &rcItem);
+		xPos -= rcItem.left;
+		if (hitTest(pNode, xPos, offset) == TVHT_ONITEMBUTTON)
+		{
+			pNode->CollapseExpand(!pNode->expanded);
+			SetItemCount(gArchive.getRootNode()->GetExpandCount() + 1);
+		}
+
+		if (m_pSelectedNode != NULL)
+		{
+			int iCurSelected = m_pSelectedNode->GetPosInTree();
+			RedrawItems(iCurSelected, iCurSelected);
+		}
+		if (m_pSelectedNode != pNode)
+		{
+			SetSelectedNode(pNode);
+			RedrawItems(iItem, iItem);
+			EnsureItemVisible(iItem);
+		}
+	}
+	return 0;
+}
+
+LRESULT CLogTreeView::OnRButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	bHandled = TRUE;
+
+	if (GetFocus() != *this)
+		SetFocus();
+
+	int xPos = GET_X_LPARAM(lParam);
+	int yPos = GET_Y_LPARAM(lParam);
+
+	LOG_NODE* pNode = NULL;
+	int iItem = ItemByPos(yPos);
+	if (iItem >= 0)
+	{
+		pNode = getTreeNode(iItem);
+	}
+
+	if (pNode)
+	{
+		if (m_pSelectedNode != pNode)
+		{
+			if (m_pSelectedNode != NULL)
+			{
+				int iCurSelected = m_pSelectedNode->GetPosInTree();
+				RedrawItems(iCurSelected, iCurSelected);
+			}
+			SetSelectedNode(pNode);
+			RedrawItems(iItem, iItem);
+			EnsureItemVisible(iItem);
+		}
+
+		bool disable;
+		int cMenu = 0;
+		POINT pt = { xPos, yPos };
+		ClientToScreen(&pt);
+		HMENU hMenu = CreatePopupMenu();
+
+		Helpers::AddMenu(hMenu, cMenu, ID_TREE_COLLAPSE_ALL, _T("Collapse All"));
+
+		disable = (!pNode->lastChild);
+		Helpers::AddMenu(hMenu, cMenu, ID_TREE_EXPAND_ALL, _T("Expand All"), disable);
+
+		UINT nRet = TrackPopupMenu(hMenu, TPM_RETURNCMD | TPM_TOPALIGN | TPM_LEFTALIGN, pt.x, pt.y, 0, m_hWnd, 0);
+		DestroyMenu(hMenu);
+		if (nRet == ID_TREE_EXPAND_ALL)
+		{
+			CollapseExpandAll(pNode, true);
+		}
+		else if (nRet == ID_TREE_COLLAPSE_ALL)
+		{
+			CollapseExpandAll(pNode, false);
+		}
+
+		//stdlog("%u\n", GetTickCount());
+	}
+	return 0;
+}
+
+LRESULT CLogTreeView::OnKeyDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+{
+	bHandled = TRUE;
+	bool bShiftPressed = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+	bool bCtrlPressed = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
+	return _OnKeyDown(wParam, bShiftPressed, bCtrlPressed);
+}
+
+LRESULT CLogTreeView::_OnKeyDown(WPARAM virt_key, bool bShiftPressed, bool bCtrlPressed)
+{
+
+	if (m_pSelectedNode == NULL)
+		return 0;
+
+	int iCurSelected = m_pSelectedNode->GetPosInTree();
+	int iNewSelected = iCurSelected;
+
+	bool redraw = true;
+
+	switch (virt_key)
+	{
+	case VK_SPACE:
+	case VK_RETURN:
+	{
+		// just enshure visible
+	}
+	break;
+
+	case VK_HOME:       // Home 
+	{
+		iNewSelected = 0;
+	}
+	break;
+	case VK_END:        // End 
+	{
+		iNewSelected = GetItemCount();
+	}
+	break;
+	case VK_PRIOR:      // Page Up 
+	case VK_NEXT:       // Page Down 
+	{
+		CClientDC dc(m_hWnd);
+		RECT rcItem, rcClient;
+		GetClientRect(&rcClient);
+		GetItemRect(0, &rcItem, LVIR_BOUNDS);
+		int count = (rcClient.bottom - rcClient.top) / (rcItem.bottom - rcItem.top);
+		if (virt_key == VK_PRIOR)
+			iNewSelected -= count;
+		else
+			iNewSelected += count;
+	}
+	break;
+	case VK_LEFT:       // Left arrow 
+	{
+		LOG_NODE* pNode = m_pSelectedNode;
+		if (pNode && pNode->expanded)
+		{
+			pNode->CollapseExpand(FALSE);
+			SetItemCount(gArchive.getRootNode()->GetExpandCount() + 1);
+		}
+		else if (pNode && pNode->parent && pNode->parent->expanded)
+		{
+			iNewSelected = pNode->parent->GetPosInTree();
+		}
+	}
+	break;
+	case VK_RIGHT:      // Right arrow 
+	{
+		LOG_NODE* pNode = m_pSelectedNode;
+		if (pNode && !pNode->expanded && pNode->lastChild)
+		{
+			pNode->CollapseExpand(TRUE);
+			SetItemCount(gArchive.getRootNode()->GetExpandCount() + 1);
+		}
+		else
+			iNewSelected++;
+	}
+	break;
+	case VK_UP:         // Up arrow 
+	{
+		if (bCtrlPressed)
+		{
+			LOG_NODE* pNode = m_pSelectedNode;
+			if (pNode && pNode->parent && pNode->parent->firstChild)
+				iNewSelected = pNode->parent->firstChild->GetPosInTree();
+		}
+		else if (bShiftPressed)
+		{
+			LOG_NODE* pNode = m_pSelectedNode;
+			if (pNode && pNode->prevSibling)
+				iNewSelected = pNode->prevSibling->GetPosInTree();
+		}
+		else
+		{
+			iNewSelected--;
+		}
+	}
+	break;
+	case VK_DOWN:       // Down arrow 
+	{
+		if (bCtrlPressed)
+		{
+			LOG_NODE* pNode = m_pSelectedNode;
+			if (pNode && pNode->parent && pNode->parent->lastChild)
+				iNewSelected = pNode->parent->lastChild->GetPosInTree();
+		}
+		else if (bShiftPressed)
+		{
+			LOG_NODE* pNode = m_pSelectedNode;
+			if (pNode && pNode->nextSibling)
+				iNewSelected = pNode->nextSibling->GetPosInTree();
+		}
+		else
+		{
+			iNewSelected++;
+		}
+	}
+	break;
+	default:
+		redraw = false;
+	}
+
+	if (iNewSelected > GetItemCount() - 1)
+		iNewSelected = GetItemCount() - 1;
+	if (iNewSelected < 0)
+		iNewSelected = 0;
+
+	if (redraw)
+	{
+		SetSelectedNode(getTreeNode(iNewSelected));
+		RedrawItems(iCurSelected, iCurSelected);
+		RedrawItems(iNewSelected, iNewSelected);
+		EnsureItemVisible(iNewSelected);
+	}
+	return 0;
+}
+
+LRESULT CLogTreeView::OnSetFocus(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+{
+	bHandled = FALSE;
+	if (m_pSelectedNode)
+	{
+		int iCurSelected = m_pSelectedNode->GetPosInTree();
+		RedrawItems(iCurSelected, iCurSelected);
+	}
+	return 0;
+}
+
+LRESULT CLogTreeView::OnKillFocus(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& bHandled)
+{
+	bHandled = FALSE;
+	if (m_pSelectedNode)
+	{
+		int iCurSelected = m_pSelectedNode->GetPosInTree();
+		RedrawItems(iCurSelected, iCurSelected);
+	}
+	return 0;
 }
 
 void CLogTreeView::Clear()
@@ -77,7 +456,7 @@ void CLogTreeView::RefreshTree()
 	if (!m_Initialised)
 		return;
 
-	int prevExpanded = gArchive.getRootNode()->GetExpandCount();
+	int prevExpanded = m_recCount ? gArchive.getRootNode()->GetExpandCount() : -1;
 	int firstAffected = -1;
 	gArchive.getRootNode()->CalcLines();
 
@@ -87,7 +466,7 @@ void CLogTreeView::RefreshTree()
 		LOG_NODE* p = gArchive.getNode(i);
 		if (p && p->parent && p->parent->pathExpanded)
 		{
-			if (p->parent->GetExpandCount() > 0 && !p->parent->hasNodeBox)
+			if (p->parent->childCount > 0 && !p->parent->hasNodeBox)
 			{
 				p->parent->hasNodeBox = 1;
 				if (firstAffected == -1 || firstAffected > p->parent->posInTree)
@@ -101,22 +480,16 @@ void CLogTreeView::RefreshTree()
 		}
 	}
 
-	if (m_recCount != 0)
+	m_recCount = newCount;
+	if (prevExpanded != gArchive.getRootNode()->GetExpandCount())
 	{
-		if (prevExpanded != gArchive.getRootNode()->GetExpandCount())
-		{
-			SetItemCountEx(gArchive.getRootNode()->GetExpandCount() + 1, LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);//LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL
-		}
-		if (firstAffected > -1)
-		{
-			RedrawItems(firstAffected, gArchive.getRootNode()->GetExpandCount());
-		}
+		SetItemCountEx(gArchive.getRootNode()->GetExpandCount() + 1, LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);//LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL
+	}
+	if (firstAffected > -1)
+	{
+		RedrawItems(firstAffected, gArchive.getRootNode()->GetExpandCount());
 	}
 
-	if (m_recCount == 0)
-		SetItemCountEx(1, LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL);//LVSICF_NOSCROLL | LVSICF_NOINVALIDATEALL
-
-	m_recCount = newCount;
 	Helpers::UpdateStatusBar();
 }
 

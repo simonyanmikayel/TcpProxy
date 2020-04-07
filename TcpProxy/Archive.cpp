@@ -42,6 +42,7 @@ void Archive::clearArchive()
 
     m_pNodes = new PtrArray<LOG_NODE>(m_pTraceBuf);
     m_rootNode = (ROOT_NODE*)m_pNodes->Add(sizeof(ROOT_NODE), true);
+    m_rootNode->expanded = 1;
     m_rootNode->data_type = LOG_TYPE::ROOT;
     ATLASSERT(m_pNodes && m_rootNode);
 }
@@ -80,9 +81,13 @@ ROUTER_NODE* Archive::addRouter(const Router* pRouter)
     return pNode;
 }
 
-CONN_NODE* Archive::getConnection(const ROUTER_NODE* pRouterNode, const Connection* pConnection)
+CONN_NODE* Archive::getConnection(const Connection* pConnection)
 {
     SYNC sync;
+    Router* pRouter = pConnection->m_pRouter;
+    ROUTER_NODE* pRouterNode = getRouter(pRouter);
+    if (!pRouterNode)
+        return nullptr;
     CONN_NODE* pNode = (CONN_NODE*)pRouterNode->lastChild;
     while (pNode)
     {
@@ -96,19 +101,20 @@ CONN_NODE* Archive::getConnection(const ROUTER_NODE* pRouterNode, const Connecti
 CONN_NODE* Archive::addConnection(const Connection* pConnection)
 {
     SYNC sync;
-    Router* pRouter = pConnection->m_pRouter;
-    ROUTER_NODE* pRouterNode = addRouter(pRouter);
-    if (!pRouterNode)
-        return nullptr;
-    CONN_NODE* pNode = getConnection(pRouterNode, pConnection);
+    CONN_NODE* pNode = getConnection(pConnection);
 
     if (pNode == nullptr)
     {
+        Router* pRouter = pConnection->m_pRouter;
+        ROUTER_NODE* pRouterNode = addRouter(pRouter);
+        if (!pRouterNode)
+            return nullptr;
         pNode = (CONN_NODE*)m_pNodes->Add(sizeof(CONN_NODE), true);
         if (!pNode)
             return nullptr;
 
         pNode->data_type = LOG_TYPE::CONN;
+        pNode->initTime = pConnection->initTime;
         pNode->id = pConnection->ID();
         pRouterNode->add_child(pNode);
     }
