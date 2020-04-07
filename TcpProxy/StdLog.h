@@ -1,7 +1,7 @@
 #pragma once
 
-#ifdef _DEBUG
-#define _STDLOG
+#ifndef _DEBUG
+#undef _STDLOG
 #endif
 
 void stdlog(const char* lpFormat, ...);

@@ -4,7 +4,7 @@
 
 CMainView::CMainView()
 	: m_wndTreeView(this)
-	, m_RightPane(this)
+	, m_wndDataView(this)
 {
 }
 
@@ -26,9 +26,9 @@ LRESULT CMainView::OnCreate(LPCREATESTRUCT lpcs)
 		WS_CHILD | WS_BORDER | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
 		LVS_REPORT | LVS_AUTOARRANGE | LVS_SHOWSELALWAYS | LVS_SHAREIMAGELISTS | LVS_OWNERDATA | LVS_NOCOLUMNHEADER,
 		LVS_EX_FULLROWSELECT);
-	m_RightPane.Create(m_wndVertSplitter, rcDefault, NULL, WS_CHILD | WS_BORDER | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0);
+	m_wndDataView.Create(m_wndVertSplitter, rcDefault, NULL, WS_CHILD | WS_BORDER | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0);
 
-	m_wndVertSplitter.SetSplitterPanes(m_wndTreeView, m_RightPane);
+	m_wndVertSplitter.SetSplitterPanes(m_wndTreeView, m_wndDataView);
 	m_wndVertSplitter.SetSplitterPosPct(std::max(10, std::min(90, gSettings.vertSplitterPos.Get())), false);
 	m_wndVertSplitter.m_bFullDrag = false;
 
@@ -99,13 +99,13 @@ LRESULT CMainView::OnPositionChanging(UINT /*uMsg*/, WPARAM wParam, LPARAM lPara
 void CMainView::ClearLog()
 {
 	m_wndTreeView.Clear();
-	m_RightPane.Clear();
+	m_wndDataView.Clear();
 }
 
 void CMainView::ApplySettings()
 {
 	m_wndTreeView.ApplySettings();
-	m_RightPane.ApplySettings();
+	m_wndDataView.ApplySettings();
 }
 void CMainView::OnSelectionChanged(LOG_NODE* pNode)
 {

@@ -1,6 +1,6 @@
 #pragma once
 #include "LogTreeView.h"
-#include "MainViewRightPane.h"
+#include "LogDataView.h"
 
 class CMainView : public CWindowImpl<CMainView>
 {
@@ -32,6 +32,6 @@ public:
 
     CSplitterWindow m_wndVertSplitter;
     CLogTreeView m_wndTreeView;
-    CMainViewRightPane m_RightPane;
+    CLogDataView m_wndDataView;
 };
 

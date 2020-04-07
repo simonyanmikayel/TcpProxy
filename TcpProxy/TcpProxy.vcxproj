@@ -171,7 +171,7 @@
     <ClInclude Include="MainFrame.h" />
     <ClInclude Include="MainView.h" />
     <ClInclude Include="LogTreeView.h" />
-    <ClInclude Include="MainViewRightPane.h" />
+    <ClInclude Include="LogDataView.h" />
     <ClInclude Include="Proxy.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ROUTE.h" />
@@ -192,7 +192,7 @@
     <ClCompile Include="MainFrame.cpp" />
     <ClCompile Include="MainView.cpp" />
     <ClCompile Include="LogTreeView.cpp" />
-    <ClCompile Include="MainViewRightPane.cpp" />
+    <ClCompile Include="LogDataView.cpp" />
     <ClCompile Include="Proxy.cpp" />
     <ClCompile Include="Router.cpp" />
     <ClCompile Include="Settings.cpp" />
