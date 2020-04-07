@@ -19,8 +19,9 @@ public:
 	ROUTER_NODE* getRouter(const Router* pRouter);
 	CONN_NODE* addConnection(const Connection* pConnection);
 	CONN_NODE* getConnection(const Connection* pConnection);
-	RECV_NODE* addRecv(const Socket* pSocket);
+	RECV_NODE* addRecv(const Socket* pSocket, char* pData, DWORD cData);
 	char* Alloc(DWORD cb, bool zero = false) { return (char*)m_pTraceBuf->Alloc(cb, zero); }
+	size_t UsedMemory();
 private:
 	PtrArray<LOG_NODE>* m_pNodes;
 	ROOT_NODE* m_rootNode;

@@ -43,7 +43,10 @@ struct Connection
 {
     Connection(Router* pRouter) : m_pRouter(pRouter), m_AcceptSocket(this), m_ConnectSocket(this) { ENTER_FUNC(); GetLocalTime(&initTime); }
     ~Connection() { ENTER_FUNC(); m_AcceptSocket.CloseSocket(); m_ConnectSocket.CloseSocket(); }
-    void close(IO_ACTION action);
+    void close(IO_ACTION action) { onClose(action); };
+    void onClose(IO_ACTION action);
+    void onConnect();
+    void onRecv();
     SOCKET_TYPE SocketType(const Socket* pSocket) { return pSocket == &m_AcceptSocket ? SOCKET_TYPE::ACCEPT : SOCKET_TYPE::CONNECT; }
     Socket* GetPear(Socket* pSocket) { return pSocket == &m_AcceptSocket ? &m_ConnectSocket : &m_AcceptSocket; }
     boolean IsAccepSocket(Socket* pSocket) { return pSocket == &m_AcceptSocket; }
@@ -54,8 +57,9 @@ struct Connection
     Socket m_ConnectSocket;
     ULONG_PTR m_err = 0;
     IO_ACTION m_io_action = IO_ACTION::NONE;
-    SYSTEMTIME initTime;
-    SYSTEMTIME closeTime;
+    SYSTEMTIME initTime = { 0 };
+    SYSTEMTIME connectTime = {0};
+    SYSTEMTIME closeTime = { 0 };
 private:
     boolean closed = false;
     static DWORD m_ID;

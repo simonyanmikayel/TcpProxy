@@ -68,5 +68,31 @@ namespace Helpers
         InsertMenu(hMenu, cMenu++, dwFlags, ID_MENU, str);
     }
 
+    CHAR* str_format_int_grouped(__int64 num)
+    {
+        static CHAR dst[16];
+        CHAR src[16];
+        char* p_src = src;
+        char* p_dst = dst;
+
+        const char separator = ',';
+        int num_len, commas;
+
+        num_len = sprintf_s(src, _countof(src), "%lld", num);
+
+        if (*p_src == '-') {
+            *p_dst++ = *p_src++;
+            num_len--;
+        }
+
+        for (commas = 2 - num_len % 3; *p_src; commas = (commas + 1) % 3) {
+            *p_dst++ = *p_src++;
+            if (commas == 1) {
+                *p_dst++ = separator;
+            }
+        }
+        *--p_dst = '\0';
+        return dst;
+    }
 };
 

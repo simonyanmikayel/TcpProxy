@@ -92,7 +92,7 @@ void CLogTreeView::EnsureItemVisible(int iItem)
 	//GetSubItemRect(iItem, 0, LVIR_BOUNDS, &rcItem);
 
 	int cbText;
-	char* szText = pNode->getTreeText(&cbText, false);
+	char* szText = pNode->getTreeText(&cbText);
 
 	int cxText, xStart, xEnd;
 	GetNodetPos(m_hdc, offset, szText, cbText, cxText, xStart, xEnd);
@@ -589,7 +589,7 @@ void CLogTreeView::SetColumnLen(int len)
 
 void CLogTreeView::DrawSubItem(int iItem, int iSubItem, HDC hdc, RECT rcItem)
 {
-	static const DWORD InfoTextColor = RGB(128, 128, 128);
+	static const DWORD InfoTextColor = RGB(0, 0, 0);
 	static const DWORD SelectionBkColor = RGB(64, 64, 192);
 
 	if (iSubItem != 0)

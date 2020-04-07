@@ -133,13 +133,15 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 					}
 					else if (IO_ACTION::CONNECT == pSocket->m_io_action)
 					{
+						pConnection->onConnect();
 						if (!pRouter->DoRecv(&pConnection->m_AcceptSocket, pProxy->m_hIoCompPort) ||
 							!pRouter->DoRecv(&pConnection->m_ConnectSocket, pProxy->m_hIoCompPort))
 							pConnection->close(IO_ACTION::RECV);
 					}
 					else if (IO_ACTION::RECV == pSocket->m_io_action)
 					{
-						gArchive.addRecv(pSocket);
+						gArchive.addRecv(pSocket, pSocket->buf, entry.dwNumberOfBytesTransferred);
+						pConnection->onRecv();
 						if (!pRouter->DoRoute(pSocket, entry.dwNumberOfBytesTransferred, pProxy->m_hIoCompPort) ||
 							!pRouter->DoRecv(pSocket, pProxy->m_hIoCompPort)) // recive loop
 							pConnection->close(IO_ACTION::RECV);

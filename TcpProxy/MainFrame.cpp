@@ -167,6 +167,12 @@ LRESULT CMainFrame::onShowMsg(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, B
     return true;
 }
 
+LRESULT CMainFrame::onUpdateTree(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+{
+    m_view.m_wndTreeView.RedrawItems((int)wParam, (int)wParam);
+    return true;
+}
+
 LRESULT CMainFrame::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
     if (wParam == TIMER_DATA_REFRESH)
@@ -200,12 +206,18 @@ void CMainFrame::StopLogging()
 
 void CMainFrame::ClearLog()
 {
+    gArchive.lock();
     gArchive.clearArchive();
     m_view.ClearLog();
     gProxy.ShowRoutes();
+    gArchive.unlock();
 }
 
 void CMainFrame::UpdateStatusBar()
 {
-    //TODO
+    static CHAR pBuf[1024];
+    int cb = 0;
+    cb += _sntprintf_s(pBuf + cb, _countof(pBuf) - cb, _countof(pBuf) - cb - 1, TEXT("Count: %s"), Helpers::str_format_int_grouped(gArchive.getNodeCount()));
+    //cb += _sntprintf_s(pBuf + cb, _countof(pBuf) - cb, _countof(pBuf) - cb - 1, TEXT("   Memory: %s mb"), Helpers::str_format_int_grouped((LONG_PTR)(gArchive.UsedMemory() / 1000000)));
+    ::PostMessage(m_hWndStatusBar, SB_SETTEXT, 0, (LPARAM)pBuf);
 }

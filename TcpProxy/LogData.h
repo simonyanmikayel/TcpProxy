@@ -64,7 +64,7 @@ struct LOG_NODE
     }
 
     void CalcLines();
-    CHAR* getTreeText(int* cBuf = NULL, bool extened = true);
+    CHAR* getTreeText(int* cBuf = NULL);
     int getTreeImage();
     int GetExpandCount() { return expanded ? cExpanded : 0; }
     void CollapseExpandAll(bool expand);
@@ -86,12 +86,20 @@ struct ROUTER_NODE : LOG_NODE
 struct CONN_NODE : LOG_NODE
 {
     DWORD id;
+    DWORD cSend;
+    DWORD cRecvd;
+    BYTE  closed;
+    char peername[32];
     IO_ACTION action;
     SYSTEMTIME initTime;
+    SYSTEMTIME connectTime;
     SYSTEMTIME closeTime;
 };
 
 struct RECV_NODE : LOG_NODE
 {
+    SYSTEMTIME time;
     boolean isLocal;
+    DWORD cData;
+    char* data() { return (char*)(this) + sizeof(*this); }
 };

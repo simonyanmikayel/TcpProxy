@@ -30,6 +30,11 @@ void Archive::unlock()
     LeaveCriticalSection(&m_cs);
 }
 
+size_t Archive::UsedMemory()
+{
+    return m_pTraceBuf->UsedMemory();
+}
+
 void Archive::clearArchive()
 {
     SYNC sync;
@@ -68,7 +73,7 @@ ROUTER_NODE* Archive::addRouter(const Router* pRouter)
     {
         const char* name = pRouter->GetRote()->name.c_str();
         WORD cb_name = (WORD)strlen(name);
-        pNode = (ROUTER_NODE*)m_pNodes->Add(sizeof(ROUTER_NODE) + cb_name, true);
+        pNode = (ROUTER_NODE*)m_pNodes->Add(sizeof(ROUTER_NODE) + cb_name + 1, true);
         if (!pNode)
             return nullptr;
 
@@ -121,7 +126,7 @@ CONN_NODE* Archive::addConnection(const Connection* pConnection)
     return pNode;
 }
 
-RECV_NODE* Archive::addRecv(const Socket* pSocket)
+RECV_NODE* Archive::addRecv(const Socket* pSocket, char* pData, DWORD cData)
 {
     SYNC sync;
     Connection* pConnection = pSocket->m_pConnection;
@@ -130,12 +135,19 @@ RECV_NODE* Archive::addRecv(const Socket* pSocket)
     if (!pConnNode)
         return nullptr;
 
-    RECV_NODE* pNode = (RECV_NODE*)m_pNodes->Add(sizeof(RECV_NODE), true);
+    RECV_NODE* pNode = (RECV_NODE*)m_pNodes->Add(sizeof(RECV_NODE) + cData, true);
     if (!pNode)
         return nullptr;
 
+    GetLocalTime(&pNode->time);
+    pNode->cData = cData;
+    memcpy(pNode->data(), pData, cData);
     pNode->data_type = LOG_TYPE::RECV;
     pNode->isLocal = (pConnection->SocketType(pSocket) == SOCKET_TYPE::ACCEPT);
+    if (pNode->isLocal)
+        pConnNode->cSend += cData;
+    else
+        pConnNode->cRecvd += cData;
     pConnNode->add_child(pNode);
     return pNode;
 }

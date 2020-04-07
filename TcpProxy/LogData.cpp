@@ -74,9 +74,9 @@ int LOG_NODE::getTreeImage()
     }
 }
 
-CHAR* LOG_NODE::getTreeText(int* cBuf, bool extened)
+CHAR* LOG_NODE::getTreeText(int* cBuf)
 {
-    const int cMaxBuf = 255;
+    const int cMaxBuf = 1024;
     static CHAR pBuf[cMaxBuf + 1];
     int cb = 0;
     CHAR* ret = pBuf;
@@ -85,36 +85,45 @@ CHAR* LOG_NODE::getTreeText(int* cBuf, bool extened)
 #endif
     if (this == gArchive.getRootNode())
     {
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT("..."));
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT(""));
     }
     else if (isRouter())
     {
         ROUTER_NODE* This = (ROUTER_NODE*)this;
-        cb = std::min(cMaxBuf - 1, (int)This->cb_name);
-        memcpy(pBuf, This->name(), cb);
-        pBuf[cb] = 0;
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT("%s "), This->name());
     }
     else if (isConn())
     {
-        //TODO - show pear addr
         CONN_NODE* This = (CONN_NODE*)this;
-        cb = std::min(cMaxBuf - 1, 4);
-        memcpy(pBuf, "TODO", cb);
-        pBuf[cb] = 0;
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT("%s (sent %d bytes, received %d bytes) "), This->peername, This->cSend, This->cRecvd);
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT("(created at %d:%d:%d.%d) "), This->initTime.wHour, This->initTime.wMinute, This->initTime.wSecond,This->initTime.wMilliseconds);
+        if (This->closed)
+        {
+            char* dueTo = "?";
+            if (This->action == IO_ACTION::ACCEPT)
+                dueTo = "client closed connection";
+            else if (This->action == IO_ACTION::CONNECT)
+                dueTo = "server rejeted connection";
+            else if (This->action == IO_ACTION::RECV || This->action == IO_ACTION::SEND)
+                dueTo = "connection closed";
+            else if (This->action == IO_ACTION::RECV || This->action == IO_ACTION::PROXY_STOP)
+                dueTo = "proxy stopped";
+            cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT("(clased at %d:%d:%d.%d due to %s) "),
+                This->initTime.wHour, This->initTime.wMinute, This->initTime.wSecond, This->initTime.wMilliseconds, dueTo);
+        }
     }
     else if (isRecv())
     {
-        //TODO - show IO info
         RECV_NODE* This = (RECV_NODE*)this;
-        cb = std::min(cMaxBuf - 1, 4);
-        memcpy(pBuf, This->isLocal ? "IO->" : "IO<-" , cb);
-        pBuf[cb] = 0;
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT("%s %d bytes "), 
+            This->isLocal ? "-> sent " : "<- received ", This->cData);
     }
     else
     {
         ATLASSERT(FALSE);
-        pBuf[cb] = 0;
     }
+    cb = std::min(cMaxBuf - 1, (int)cb);
+    pBuf[cb] = 0;
     if (cBuf)
         *cBuf = cb;
     return ret;

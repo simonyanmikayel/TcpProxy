@@ -9,7 +9,35 @@
 DWORD Router::m_ID = 0;
 DWORD Connection::m_ID = 0;
 
-void Connection::close(IO_ACTION action) 
+void Connection::onConnect()
+{
+	GetLocalTime(&connectTime);
+	CONN_NODE* pNode = gArchive.getConnection(this);
+	if (pNode)
+	{
+		pNode->connectTime = connectTime;
+		SOCKADDR_IN clientAddr;
+		int nClientAddrLen = sizeof(clientAddr);
+		if (getpeername(m_AcceptSocket.m_s, (LPSOCKADDR)&clientAddr, &nClientAddrLen) != SOCKET_ERROR)
+		{
+			strncpy_s(pNode->peername, inet_ntoa(clientAddr.sin_addr), _countof(pNode->peername) - 1);
+		}
+		if (pNode->posInTree && pNode->parent && pNode->parent->expanded)
+			::PostMessage(hwndMain, WM_UPDATE_TREE, (WPARAM)pNode->posInTree, (LPARAM)0);
+	}
+}
+
+void Connection::onRecv()
+{
+	CONN_NODE* pNode = gArchive.getConnection(this);
+	if (pNode)
+	{
+		if (pNode->posInTree && pNode->parent && pNode->parent->expanded)
+			::PostMessage(hwndMain, WM_UPDATE_TREE, (WPARAM)pNode->posInTree, (LPARAM)0);
+	}
+}
+
+void Connection::onClose(IO_ACTION action)
 { 
 	ENTER_FUNC(); 
 	if (!closed)
@@ -19,10 +47,10 @@ void Connection::close(IO_ACTION action)
 		m_AcceptSocket.CloseSocket();
 		m_ConnectSocket.CloseSocket();
 		GetLocalTime(&closeTime);
-		//gArchive.getNode
 		CONN_NODE* pNode = gArchive.getConnection(this);
 		if (pNode)
 		{
+			pNode->closed = 1;
 			pNode->action = action;
 			pNode->closeTime = closeTime;
 			if (pNode->posInTree && pNode->parent && pNode->parent->expanded)
