@@ -113,7 +113,7 @@ CHAR* LOG_NODE::getTreeText(int* cBuf)
             else if (This->action == IO_ACTION::RECV || This->action == IO_ACTION::PROXY_STOP)
                 dueTo = "proxy stopped";
             cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(clased at %d:%d:%d.%d) (%s) "),
-                This->initTime.wHour, This->initTime.wMinute, This->initTime.wSecond, This->initTime.wMilliseconds, dueTo);
+                This->closeTime.wHour, This->closeTime.wMinute, This->closeTime.wSecond, This->closeTime.wMilliseconds, dueTo);
         }
     }
     else if (RECV_NODE* This = asRecv())
