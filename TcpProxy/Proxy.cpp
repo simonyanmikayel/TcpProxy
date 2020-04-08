@@ -109,7 +109,7 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 				Router* pRouter = pConnection->m_pRouter;
 				pConnection->m_err = err;
 
-				STDLOG("pSocket: %s m_io_action=%s  bytes=%d err=%X", 
+				STDLOG("pSocket: %s action=%s bytes=%d err=%X", 
 					SocketTypeNmae(pConnection->SocketType(pSocket)), 
 					IoTypeNmae(pSocket->m_io_action), 
 					entry.dwNumberOfBytesTransferred, err);

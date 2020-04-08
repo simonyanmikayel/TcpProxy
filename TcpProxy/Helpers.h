@@ -16,4 +16,5 @@ namespace Helpers
 	char* int2char(int i);
 	void AddMenu(HMENU hMenu, int& cMenu, int ID_MENU, LPCTCH str, bool disable = false);
 	CHAR* str_format_int_grouped(__int64 num);
+	size_t HexDump(BYTE* pBuf, size_t cBuf, const BYTE* pData, size_t cData, int cColumn);
 };

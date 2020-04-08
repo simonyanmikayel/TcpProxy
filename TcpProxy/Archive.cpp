@@ -72,15 +72,20 @@ ROUTER_NODE* Archive::addRouter(const Router* pRouter)
     if (pNode == nullptr)
     {
         const char* name = pRouter->GetRote()->name.c_str();
+        const char* remote_addr = pRouter->GetRote()->remote_addr.c_str();
         WORD cb_name = (WORD)strlen(name);
-        pNode = (ROUTER_NODE*)m_pNodes->Add(sizeof(ROUTER_NODE) + cb_name + 1, true);
+        WORD cb_remote_addr = (WORD)strlen(remote_addr);
+        pNode = (ROUTER_NODE*)m_pNodes->Add(sizeof(ROUTER_NODE) + cb_name + 1 + cb_remote_addr + cb_remote_addr, true);
         if (!pNode)
             return nullptr;
 
         pNode->data_type = LOG_TYPE::ROUTER;
         pNode->id = pRouter->ID();
+        pNode->local_port = pRouter->GetRote()->local_port;
+        pNode->remote_port = pRouter->GetRote()->remote_port;
         pNode->cb_name = cb_name;
         memcpy(pNode->name(), name, cb_name);
+        memcpy(pNode->remote_addr(), remote_addr, cb_remote_addr);
         getRootNode()->add_child(pNode);
     }
     return pNode;

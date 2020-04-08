@@ -50,15 +50,15 @@ void LOG_NODE::CalcLines()
 
 int LOG_NODE::getTreeImage()
 {
-    if (isRoot())
+    if (asRoot())
     {
         return 0;//IDI_ICON_TREE_ROOT
     }
-    else if (isRouter())
+    else if (asRouter())
     {
         return 1;//IDI_ICON_TREE_ROUTE
     }
-    else if (isConn())
+    else if (asConn())
     {
         CONN_NODE* This = (CONN_NODE*)this;
         if (This->closed)
@@ -68,7 +68,7 @@ int LOG_NODE::getTreeImage()
         else
             return 2;//IDI_ICON_TREE_CONN_INITIAL
     }
-    else if (isRecv())
+    else if (asRecv())
     {
         RECV_NODE* This = (RECV_NODE*)this;
         return This->isLocal ? 5 : 6;//IDI_ICON_TREE_RECV_LOCAL or IDI_ICON_TREE_RECV_REMOTE
@@ -87,22 +87,20 @@ CHAR* LOG_NODE::getTreeText(int* cBuf)
     int cb = 0;
     CHAR* ret = pBuf;
 #ifdef _DEBUG
-    //cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT("[%d %d %d]"), GetExpandCount(), line, lastChild ? lastChild->index : 0);
+    //cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("[%d %d %d]"), GetExpandCount(), line, lastChild ? lastChild->index : 0);
 #endif
-    if (isRoot())
+    if (asRoot())
     {
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT("   "));
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("   "));
     }
-    else if (isRouter())
+    else if (ROUTER_NODE* This = asRouter())
     {
-        ROUTER_NODE* This = (ROUTER_NODE*)this;
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT("%s "), This->name());
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("%s "), This->name());
     }
-    else if (isConn())
+    else if (CONN_NODE* This = asConn())
     {
-        CONN_NODE* This = (CONN_NODE*)this;
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT("%s (sent %d bytes, received %d bytes) "), This->peername, This->cSend, This->cRecvd);
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT("(created at %d:%d:%d.%d) "), This->initTime.wHour, This->initTime.wMinute, This->initTime.wSecond,This->initTime.wMilliseconds);
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("%s (sent %d bytes, received %d bytes) "), This->peername, This->cSend, This->cRecvd);
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(created at %d:%d:%d.%d) "), This->initTime.wHour, This->initTime.wMinute, This->initTime.wSecond,This->initTime.wMilliseconds);
         if (This->closed)
         {
             char* dueTo = "?";
@@ -114,18 +112,17 @@ CHAR* LOG_NODE::getTreeText(int* cBuf)
                 dueTo = "connection closed";
             else if (This->action == IO_ACTION::RECV || This->action == IO_ACTION::PROXY_STOP)
                 dueTo = "proxy stopped";
-            cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT("(clased at %d:%d:%d.%d due to %s) "),
+            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(clased at %d:%d:%d.%d due to %s) "),
                 This->initTime.wHour, This->initTime.wMinute, This->initTime.wSecond, This->initTime.wMilliseconds, dueTo);
         }
     }
-    else if (isRecv())
-    {
-        RECV_NODE* This = (RECV_NODE*)this;
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, TEXT("%s %d bytes "), 
+    else if (RECV_NODE* This = asRecv())
+    {        
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("%s %d bytes "),
             This->isLocal ? "-> sent " : "<- received ", This->cData);
     }
     else
-    {
+    { 
         ATLASSERT(FALSE);
     }
     cb = std::min(cMaxBuf - 1, (int)cb);

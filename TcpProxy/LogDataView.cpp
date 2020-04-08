@@ -26,49 +26,50 @@ void CLogDataView::Clear()
 
 void CLogDataView::OnSelectionChanged(LOG_NODE* pNode)
 {
-    static const int cMaxBuf = 4 * Socket::bufSize;
-    static char pBuf[cMaxBuf];
-    int cb = 0;
-    if (pNode->isRoot())
+    static const size_t cMaxBuf = 6 * Socket::bufSize;
+    static char pBuf[cMaxBuf + 1];
+    size_t cb = 0;
+    if (pNode->asRoot())
     {
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, ":)");
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, ":)\r\n");
+        //char pp[] = { 0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f','j','h','k','l' };
+        //cb += Helpers::HexDump((BYTE*)(pBuf + cb), cMaxBuf - cb, (BYTE*)pp, sizeof(pp), 32);
     }
-    else if (pNode->isRouter())
-    {
-        ROUTER_NODE* This = (ROUTER_NODE*)this;
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, "%s ", This->name());
+    else if (ROUTER_NODE* p = pNode->asRouter())
+    {        
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "%s:\r\nLocal port: %d\r\nRemote port: %d\r\nRemote addr: %s",
+            p->name(), p->local_port, p->remote_port, p->remote_addr()); 
     }
-    else if (pNode->isConn())
-    {
-        CONN_NODE* This = (CONN_NODE*)this;
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, "%s\nsent %d bytes, received %d bytes\n", This->peername, This->cSend, This->cRecvd);
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, "created at %d:%d:%d.%d\n", This->initTime.wHour, This->initTime.wMinute, This->initTime.wSecond, This->initTime.wMilliseconds);
-        if (This->closed)
+    else if (CONN_NODE* p = pNode->asConn())
+    {        
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "%s\r\nsent %d bytes\r\nreceived %d bytes\r\n", p->peername, p->cSend, p->cRecvd);
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "created at %d:%d:%d.%d\r\n", p->initTime.wHour, p->initTime.wMinute, p->initTime.wSecond, p->initTime.wMilliseconds);
+        if (p->closed)
         {
             char* dueTo = "?";
-            if (This->action == IO_ACTION::ACCEPT)
+            if (p->action == IO_ACTION::ACCEPT)
                 dueTo = "client closed connection";
-            else if (This->action == IO_ACTION::CONNECT)
+            else if (p->action == IO_ACTION::CONNECT)
                 dueTo = "server rejeted connection";
-            else if (This->action == IO_ACTION::RECV || This->action == IO_ACTION::SEND)
+            else if (p->action == IO_ACTION::RECV || p->action == IO_ACTION::SEND)
                 dueTo = "connection closed";
-            else if (This->action == IO_ACTION::RECV || This->action == IO_ACTION::PROXY_STOP)
+            else if (p->action == IO_ACTION::RECV || p->action == IO_ACTION::PROXY_STOP)
                 dueTo = "proxy stopped";
-            cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, "clased at %d:%d:%d.%d due to %s\n",
-                This->initTime.wHour, This->initTime.wMinute, This->initTime.wSecond, This->initTime.wMilliseconds, dueTo);
+            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "clased at %d:%d:%d.%d due to %s\r\n",
+                p->initTime.wHour, p->initTime.wMinute, p->initTime.wSecond, p->initTime.wMilliseconds, dueTo);
         }
     }
-    else if (pNode->isRecv())
+    else if (RECV_NODE* p = pNode->asRecv())
     {
-        RECV_NODE* This = (RECV_NODE*)this;
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, "%s %d bytes\n\n",
-            This->isLocal ? "-> sent " : "<- received ", This->cData);
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "%s %d bytes\r\n\r\n",
+            p->isLocal ? "-> sent " : "<- received ", p->cData);
+        cb += Helpers::HexDump((BYTE*)(pBuf + cb), cMaxBuf - cb, (BYTE*)p->data(), p->cData, 16);
     }
     else
     {
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf, cMaxBuf, ":(");
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, ":(");
     }
-    cb = std::min(cMaxBuf - 1, (int)cb);
+    cb = std::min(cMaxBuf - 1, cb);
     pBuf[cb] = 0;
     SetWindowText(pBuf);
 }

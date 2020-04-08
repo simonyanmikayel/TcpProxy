@@ -13,17 +13,17 @@ void Connection::onConnect()
 {
 	opened = true;
 	GetLocalTime(&connectTime);
+	SOCKADDR_IN* localAddr = (SOCKADDR_IN*)m_AcceptSocket.addrBuf;
+	SOCKADDR_IN* remoteAddr = (SOCKADDR_IN*)(m_AcceptSocket.addrBuf + Socket::addrBufLen);
+	char* localName = inet_ntoa(localAddr->sin_addr);
+	char* remoteName = inet_ntoa(remoteAddr->sin_addr);
 	CONN_NODE* pNode = gArchive.getConnection(this);
 	if (pNode)
 	{
 		pNode->connectTime = connectTime;
 		pNode->opened = 1;
-		SOCKADDR_IN clientAddr;
-		int nClientAddrLen = sizeof(clientAddr);
-		if (getpeername(m_AcceptSocket.m_s, (LPSOCKADDR)&clientAddr, &nClientAddrLen) != SOCKET_ERROR)
-		{
-			strncpy_s(pNode->peername, inet_ntoa(clientAddr.sin_addr), _countof(pNode->peername) - 1);
-		}
+		if (remoteName)
+			strncpy_s(pNode->peername, remoteName, _countof(pNode->peername) - 1);
 		if (pNode->posInTree && pNode->parent && pNode->parent->expanded)
 			::PostMessage(hwndMain, WM_UPDATE_TREE, (WPARAM)pNode->posInTree, (LPARAM)pNode->posInTree);
 	}
@@ -83,7 +83,7 @@ SOCKET CreateBoundTcpSocket(u_short port = 0)
 		// Bind the listening socket to the local IP address and port
 		SOCKADDR_IN LocalAddr;
 		memset(&LocalAddr, 0, sizeof(SOCKADDR_IN));
-		BOOL       b = TRUE;
+		DWORD       b = TRUE;
 		LocalAddr.sin_family = AF_INET;
 		LocalAddr.sin_port = htons(port);
 		LocalAddr.sin_addr.S_un.S_addr = INADDR_ANY;
@@ -109,6 +109,9 @@ boolean Router::StartListening(HANDLE hIoCompPort)
 		Helpers::SysErrMessageBox("Create of ListenSocket socket failed with error: %u\n", WSAGetLastError());
 		return false;
 	}
+
+	DWORD b = 1;
+	setsockopt(m_ListenSocket, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (LPCSTR)&b, sizeof(b));
 
 	// Associate the listening socket with the completion port
 	HANDLE hCompPort2 = CreateIoCompletionPort((HANDLE)m_ListenSocket, hIoCompPort, (u_long)0, 0);
@@ -140,7 +143,10 @@ boolean Router::DoAccept(HANDLE hIoCompPort)
 	{
 		Helpers::SysErrMessageBox("Create accept socket failed with error: %u\n", WSAGetLastError());
 		return false;
-	}
+	}	
+
+	DWORD b = 1;
+	setsockopt(AcceptSocket.m_s, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (LPCSTR)&b, sizeof(b));
 
 	// Associate the accept socket with the completion port
 	HANDLE hCompPort2 = CreateIoCompletionPort((HANDLE)AcceptSocket.m_s, hIoCompPort, (u_long)0, 0);
@@ -150,20 +156,18 @@ boolean Router::DoAccept(HANDLE hIoCompPort)
 		return false;
 	}
 
-	const int addrBufLen = sizeof(sockaddr_in) + 16;
-	char lpOutputBuf[2* addrBufLen];
 	DWORD dwBytes = 0;
 	AcceptSocket.m_io_action = IO_ACTION::ACCEPT;
 	BOOL bRetVal = wsock::lpfnAcceptEx(
 		m_ListenSocket, 
 		AcceptSocket.m_s,
-		lpOutputBuf, //A pointer to a buffer that receives the first block of data sent on a new connection, the local address of the server, and the remote address of the client
+		AcceptSocket.addrBuf, //A pointer to a buffer that receives the first block of data sent on a new connection, the local address of the server, and the remote address of the client
 		0, // If dwReceiveDataLength is zero, accepting the connection will not result in a receive operation. Instead, AcceptEx completes as soon as a connection arrives, without waiting for any data
-		addrBufLen, //The number of bytes reserved for the local address information. This value must be at least 16 bytes more than the maximum address length for the transport protocol in use.
-		addrBufLen, //The number of bytes reserved for the remote address information. This value must be at least 16 bytes more than the maximum address length for the transport protocol in use.
+		Socket::addrBufLen, //The number of bytes reserved for the local address information. This value must be at least 16 bytes more than the maximum address length for the transport protocol in use.
+		Socket::addrBufLen, //The number of bytes reserved for the remote address information. This value must be at least 16 bytes more than the maximum address length for the transport protocol in use.
 		&dwBytes, &AcceptSocket);
 
-	if (bRetVal == FALSE) 
+	if (bRetVal == FALSE)
 	{
 		DWORD dwError = WSAGetLastError();
 		if (dwError != ERROR_IO_PENDING)
@@ -172,6 +176,7 @@ boolean Router::DoAccept(HANDLE hIoCompPort)
 			return false;
 		}
 	}
+	//EXIT_FUNC();
 	return true;
 }
 

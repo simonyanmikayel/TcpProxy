@@ -27,14 +27,21 @@ inline char* IoTypeNmae(IO_ACTION i) {
 struct Socket : WSAOVERLAPPED
 {
     friend struct Connection;
-    Socket(Connection* pConnection) : m_pConnection(pConnection), m_s(INVALID_SOCKET), m_io_action(IO_ACTION::NONE), This(this){ ENTER_FUNC(); memset(this, 0, sizeof(WSAOVERLAPPED)); }
+    Socket(Connection* pConnection) : m_pConnection(pConnection), m_s(INVALID_SOCKET), m_io_action(IO_ACTION::NONE), This(this)
+    { 
+        ENTER_FUNC(); 
+        memset(this, 0, sizeof(WSAOVERLAPPED)); 
+        memset(addrBuf, 0, sizeof(addrBuf));
+    }
     ~Socket() { ENTER_FUNC(); CloseSocket(); }
     SOCKET m_s;
     IO_ACTION m_io_action;
     Connection* m_pConnection;
     void* This;
-    static const int bufSize = 1024 * 128;
+    static const size_t bufSize = 1024 * 128;
     char buf[bufSize];
+    static const int addrBufLen = sizeof(sockaddr_in) + 16;
+    char addrBuf[2 * addrBufLen];
 private:
     void CloseSocket() { ENTER_FUNC(); if (m_s != INVALID_SOCKET) { closesocket(m_s), m_s = INVALID_SOCKET; } }
 };

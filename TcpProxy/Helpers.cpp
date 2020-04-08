@@ -94,5 +94,37 @@ namespace Helpers
         *--p_dst = '\0';
         return dst;
     }
+    
+    size_t HexDump(BYTE* pBuf, size_t cBuf, const BYTE* pData, size_t cData, int cColumn)
+    {
+        const char* hex = "0123456789ABCDEF";
+        size_t i, j, k = 0;
+
+        for (i = 0; i < cData; ) {
+            size_t i0 = i;
+            for (j = 0; j < cColumn && i < cData && k < cBuf; j++, i++)
+            {
+                if (k < cBuf)
+                    pBuf[k++] = hex[(pData[i] >> 4) & 0x0F];
+                if (k < cBuf)
+                    pBuf[k++] = hex[(pData[i]) & 0x0F];
+                if (k < cBuf)
+                    pBuf[k++] = ' ';
+            }
+            if (k < cBuf)
+                pBuf[k++] = '\t';
+            i = i0;
+            for (j = 0; j < cColumn && i < cData && k < cBuf; j++, i++)
+            {
+                if (k < cBuf)
+                    pBuf[k++] = pData[i] >= ' ' ? pData[i] : '.';
+            }
+            if (k < cBuf)
+                pBuf[k++] = '\r';
+            if (k < cBuf)
+                pBuf[k++] = '\n';
+        }
+        return k;
+    }
 };
 

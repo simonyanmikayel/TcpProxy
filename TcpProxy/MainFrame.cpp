@@ -207,19 +207,18 @@ void CMainFrame::RefreshLog()
 
 void CMainFrame::StartLogging()
 {
-    SetTimer(TIMER_DATA_REFRESH, TIMER_DATA_REFRESH_INTERVAL);
+    gArchive.lock();
+    gArchive.clearArchive();
+    m_view.ClearLog();
     gProxy.Start(gSettings.routes.Get());
+    SetTimer(TIMER_DATA_REFRESH, TIMER_DATA_REFRESH_INTERVAL);
+    gArchive.unlock();
 }
 
 void CMainFrame::StopLogging()
 {
-    KillTimer(TIMER_DATA_REFRESH);
-    gArchive.lock();
     gProxy.Stop();
-    gArchive.clearArchive();
-    m_view.ClearLog();
-    gArchive.unlock();
-    RefreshLog();
+    KillTimer(TIMER_DATA_REFRESH);
 }
 
 void CMainFrame::ClearLog()

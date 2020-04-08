@@ -4,6 +4,10 @@
 #include "Router.h"
 
 enum class LOG_TYPE { ROOT, ROUTER, CONN, RECV};
+struct ROOT_NODE;
+struct ROUTER_NODE;
+struct CONN_NODE;
+struct RECV_NODE;
 
 struct LOG_NODE
 {
@@ -31,10 +35,15 @@ struct LOG_NODE
     LOG_TYPE data_type;
     DWORD childCount;
 
-    bool isRoot() { return data_type == LOG_TYPE::ROOT; }
-    bool isRouter() { return data_type == LOG_TYPE::ROUTER; }
-    bool isConn() { return data_type == LOG_TYPE::CONN; }
-    bool isRecv() { return data_type == LOG_TYPE::RECV; }
+    ROOT_NODE* asRoot() { return data_type == LOG_TYPE::ROOT ? (ROOT_NODE*)this : nullptr; }
+    ROUTER_NODE* asRouter() { return data_type == LOG_TYPE::ROUTER ? (ROUTER_NODE*)this : nullptr; }
+    CONN_NODE* asConn() { return data_type == LOG_TYPE::CONN ? (CONN_NODE*)this : nullptr; }
+    RECV_NODE* asRecv() { return data_type == LOG_TYPE::RECV ? (RECV_NODE*)this : nullptr; }
+
+    //bool isRoot() { return data_type == LOG_TYPE::ROOT; }
+    //bool isRouter() { return data_type == LOG_TYPE::ROUTER; }
+    //bool isConn() { return data_type == LOG_TYPE::CONN; }
+    //bool isRecv() { return data_type == LOG_TYPE::RECV; }
 
     void add_child(LOG_NODE* pNode)
     {
@@ -79,8 +88,12 @@ struct ROOT_NODE : LOG_NODE
 struct ROUTER_NODE : LOG_NODE
 {
     DWORD id;
+    DWORD local_port;
+    DWORD remote_port;
     WORD cb_name;
+    WORD cb_remote_addr;
     char* name() { return (char*)(this) + sizeof(*this); }
+    char* remote_addr() { return name() + cb_name + 1; }
 };
 
 struct CONN_NODE : LOG_NODE
