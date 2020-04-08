@@ -15,6 +15,7 @@ public:
         COMMAND_HANDLER(IDC_BUTTON_ADD, BN_CLICKED, OnCmdButtonAdd)
         COMMAND_HANDLER(IDC_BUTTON_EDIT, BN_CLICKED, OnCmdButtonEdit)
         COMMAND_HANDLER(IDC_BUTTON_DELETE, BN_CLICKED, OnCmdButtonDelete)
+        NOTIFY_CODE_HANDLER(NM_DBLCLK, OnDblClick)
         REFLECT_NOTIFICATIONS()
     END_MSG_MAP()
 
@@ -26,9 +27,11 @@ public:
     LRESULT OnCmdButtonAdd(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnCmdButtonEdit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnCmdButtonDelete(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+    LRESULT OnDblClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/);
 
     void GetRoute(ROUTE& r, int iItem);
     void SetRoute(const ROUTE& r, int iItem);
     void AddRoute(const ROUTE& r);
+    void EdotRoute();
 };
 

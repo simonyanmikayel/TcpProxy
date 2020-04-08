@@ -55,7 +55,7 @@ void CLogDataView::OnSelectionChanged(LOG_NODE* pNode)
                 dueTo = "connection closed";
             else if (p->action == IO_ACTION::RECV || p->action == IO_ACTION::PROXY_STOP)
                 dueTo = "proxy stopped";
-            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "clased at %d:%d:%d.%d due to %s\r\n",
+            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "clased at %d:%d:%d.%d\r\n%s\r\n",
                 p->initTime.wHour, p->initTime.wMinute, p->initTime.wSecond, p->initTime.wMilliseconds, dueTo);
         }
     }

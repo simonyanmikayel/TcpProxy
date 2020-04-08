@@ -90,17 +90,7 @@ LRESULT DlgRouteTable::OnCmdButtonAdd(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /
 
 LRESULT DlgRouteTable::OnCmdButtonEdit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-    int nItem = m_RouteList.GetSelectedIndex();
-    if (nItem >= 0)
-    {
-        ROUTE r;
-        GetRoute(r, nItem);
-        DlgRoute dlg(&r);
-        if (IDOK == dlg.DoModal())
-        {
-            SetRoute(dlg.m_route, nItem);
-        }
-    }
+    EdotRoute();
     return 0;
 }
 
@@ -114,6 +104,31 @@ LRESULT DlgRouteTable::OnCmdButtonDelete(WORD /*wNotifyCode*/, WORD /*wID*/, HWN
             m_RouteList.SelectItem(nItem - 1);
         else if (m_RouteList.GetItemCount() > 0)
             m_RouteList.SelectItem(0);
+    }
+    return 0;
+}
+
+void DlgRouteTable::EdotRoute()
+{
+    int nItem = m_RouteList.GetSelectedIndex();
+    if (nItem >= 0)
+    {
+        ROUTE r;
+        GetRoute(r, nItem);
+        DlgRoute dlg(&r);
+        if (IDOK == dlg.DoModal())
+        {
+            SetRoute(dlg.m_route, nItem);
+        }
+    }
+}
+
+LRESULT DlgRouteTable::OnDblClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/)
+{
+    if (pnmh->hwndFrom == m_RouteList)
+    {
+        //LPNMITEMACTIVATE lpnmitemactivate = (LPNMITEMACTIVATE)pnmh;
+        EdotRoute();
     }
     return 0;
 }
