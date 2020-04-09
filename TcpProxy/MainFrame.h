@@ -61,6 +61,7 @@ public:
     LRESULT onUpdateTree(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 
     void UpdateStatusBar();
+    void SetTitle();
 
 private:
     void RefreshLog();

@@ -62,7 +62,16 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
     pLoop->AddMessageFilter(this);
     pLoop->AddIdleHandler(this);
 
+    SetTitle();
+
     return 0;
+}
+
+void CMainFrame::SetTitle()
+{
+    CHAR pBuf[256];
+    _sntprintf_s(pBuf, _countof(pBuf), _countof(pBuf) - 1, TEXT("%s"), TEXT("TCP Proxy"));
+    SetWindowText(pBuf);
 }
 
 LRESULT CMainFrame::OnActivate(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& /*bHandled*/)
