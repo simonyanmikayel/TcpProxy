@@ -220,7 +220,7 @@ LRESULT CLogTreeView::OnLButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
 		{
 			SetSelectedNode(pNode);
 			RedrawItems(iItem, iItem);
-			EnsureItemVisible(iItem);
+			//EnsureItemVisible(iItem);
 		}
 	}
 	return 0;

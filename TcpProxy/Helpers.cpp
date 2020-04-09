@@ -126,5 +126,24 @@ namespace Helpers
         }
         return k;
     }
+
+    void MaskWhiteSpace(std::string& str)
+    {
+        for (int i = 0; i < str.size(); i++) {
+            if (str[i] == ' ') {
+                str[i] = (char)255;
+            }
+        }
+    }
+
+    void UnmaskWhiteSpace(std::string& str)
+    {
+        for (int i = 0; i < str.size(); i++) {
+            if ((BYTE)str[i] == 255) {
+                str[i] = ' ';
+            }
+        }
+    }
+
 };
 

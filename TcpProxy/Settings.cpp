@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "Settings.h"
+#include "Helpers.h"
 #include "resource.h"
 
 CSettings gSettings;
@@ -56,9 +57,13 @@ ARR_VALUE<T>::ARR_VALUE(LPCTSTR sz) : szRegKey(sz)
 		if (gSettings.ReadSTR(szRegKey, (char*)str.c_str(), (int)cbData))
 		{
 //			str = "1\n2\n3\n4\n5\n";
+			//Helpers::MaskWhiteSpace(str);
 			std::stringstream s(str);
-			int count;
-			s >> count;
+
+			std::string strCount;
+			getline(s, strCount);
+			int count = std::stoi(strCount);
+			//s.setf(std::ios::skipws, 0);
 			if (count > 0 && count < MAX_ARRAY_SIZE)
 			{
 				val.clear();

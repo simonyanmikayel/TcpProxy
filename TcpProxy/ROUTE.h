@@ -1,4 +1,5 @@
 #pragma once
+#include "Helpers.h"
 
 struct ROUTE
 {
@@ -9,10 +10,17 @@ struct ROUTE
     boolean IsValid() { return local_port && remote_port && remote_addr.size(); }
     void deserialize(std::stringstream& s)
     {
-        s >> name;
-        s >> local_port;
-        s >> remote_port;
-        s >> remote_addr;
+        std::string str;
+        getline(s, name);
+        getline(s, str); local_port = std::stoi(str);
+        getline(s, str); remote_port = std::stoi(str);
+        getline(s, remote_addr);
+        //s >> name;
+        //s >> local_port;
+        //s >> remote_port;
+        //s >> remote_addr;
+        //Helpers::UnmaskWhiteSpace(name);
+        //Helpers::UnmaskWhiteSpace(remote_addr);
     }
     void serialize(std::stringstream& s) const
     {

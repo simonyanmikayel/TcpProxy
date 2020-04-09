@@ -37,7 +37,7 @@ void CLogDataView::OnSelectionChanged(LOG_NODE* pNode)
     }
     else if (ROUTER_NODE* p = pNode->asRouter())
     {        
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "%s:\r\nLocal port: %d\r\nRemote port: %d\r\nRemote addr: %s",
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "Name:        %s\r\nLocal port:  %d\r\nRemote port: %d\r\nRemote addr: %s",
             p->name(), p->local_port, p->remote_port, p->remote_addr()); 
     }
     else if (CONN_NODE* p = pNode->asConn())

@@ -58,20 +58,18 @@ int LOG_NODE::getTreeImage()
     {
         return 1;//IDI_ICON_TREE_ROUTE
     }
-    else if (asConn())
+    else if (CONN_NODE* p = asConn())
     {
-        CONN_NODE* This = (CONN_NODE*)this;
-        if (This->closed)
+        if (p->closed)
             return 4;//IDI_ICON_TREE_CONN_CLOSED
-        else if (This->opened)
+        else if (p->opened)
             return 3;//IDI_ICON_TREE_CONN_CONNECTED
         else
             return 2;//IDI_ICON_TREE_CONN_INITIAL
     }
-    else if (asRecv())
+    else if (RECV_NODE* p = asRecv())
     {
-        RECV_NODE* This = (RECV_NODE*)this;
-        return This->isLocal ? 5 : 6;//IDI_ICON_TREE_RECV_LOCAL or IDI_ICON_TREE_RECV_REMOTE
+        return p->isLocal ? 5 : 6;//IDI_ICON_TREE_RECV_LOCAL or IDI_ICON_TREE_RECV_REMOTE
     }
     else
     {
@@ -93,33 +91,34 @@ CHAR* LOG_NODE::getTreeText(int* cBuf)
     {
         cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("   "));
     }
-    else if (ROUTER_NODE* This = asRouter())
+    else if (ROUTER_NODE* p = asRouter())
     {
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("%s "), This->name());
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "%s (%d->%s:%d)",
+            p->name(), p->local_port, p->remote_addr(), p->remote_port);
     }
-    else if (CONN_NODE* This = asConn())
+    else if (CONN_NODE* p = asConn())
     {
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("%s (sent %d bytes, received %d bytes) "), This->peername, This->cSend, This->cRecvd);
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(created at %d:%d:%d.%d) "), This->initTime.wHour, This->initTime.wMinute, This->initTime.wSecond,This->initTime.wMilliseconds);
-        if (This->closed)
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("%s (sent %d bytes, received %d bytes) "), p->peername, p->cSend, p->cRecvd);
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(created at %d:%d:%d.%d) "), p->initTime.wHour, p->initTime.wMinute, p->initTime.wSecond,p->initTime.wMilliseconds);
+        if (p->closed)
         {
             char* dueTo = "?";
-            if (This->action == IO_ACTION::ACCEPT)
+            if (p->action == IO_ACTION::ACCEPT)
                 dueTo = "client closed connection";
-            else if (This->action == IO_ACTION::CONNECT)
+            else if (p->action == IO_ACTION::CONNECT)
                 dueTo = "server rejeted connection";
-            else if (This->action == IO_ACTION::RECV || This->action == IO_ACTION::SEND)
+            else if (p->action == IO_ACTION::RECV || p->action == IO_ACTION::SEND)
                 dueTo = "connection closed";
-            else if (This->action == IO_ACTION::RECV || This->action == IO_ACTION::PROXY_STOP)
+            else if (p->action == IO_ACTION::RECV || p->action == IO_ACTION::PROXY_STOP)
                 dueTo = "proxy stopped";
             cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(clased at %d:%d:%d.%d) (%s) "),
-                This->closeTime.wHour, This->closeTime.wMinute, This->closeTime.wSecond, This->closeTime.wMilliseconds, dueTo);
+                p->closeTime.wHour, p->closeTime.wMinute, p->closeTime.wSecond, p->closeTime.wMilliseconds, dueTo);
         }
     }
-    else if (RECV_NODE* This = asRecv())
+    else if (RECV_NODE* p = asRecv())
     {        
         cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("%s %d bytes "),
-            This->isLocal ? "-> sent " : "<- received ", This->cData);
+            p->isLocal ? "-> sent " : "<- received ", p->cData);
     }
     else
     { 
