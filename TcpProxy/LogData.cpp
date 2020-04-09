@@ -119,6 +119,8 @@ CHAR* LOG_NODE::getTreeText(int* cBuf)
     {        
         cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("%s %d bytes "),
             p->isLocal ? "-> sent " : "<- received ", p->cData);
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(at %d:%d:%d.%d) "),
+            p->time.wHour, p->time.wMinute, p->time.wSecond, p->time.wMilliseconds);
     }
     else
     { 

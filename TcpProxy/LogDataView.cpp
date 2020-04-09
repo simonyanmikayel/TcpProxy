@@ -61,8 +61,10 @@ void CLogDataView::OnSelectionChanged(LOG_NODE* pNode)
     }
     else if (RECV_NODE* p = pNode->asRecv())
     {
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "%s %d bytes\r\n\r\n",
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "%s %d bytes ",
             p->isLocal ? "-> sent " : "<- received ", p->cData);
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(at %d:%d:%d.%d)\r\n\r\n"),
+            p->time.wHour, p->time.wMinute, p->time.wSecond, p->time.wMilliseconds);
         cb += Helpers::HexDump((BYTE*)(pBuf + cb), cMaxBuf - cb, (BYTE*)p->data(), p->cData, 16);
     }
     else
