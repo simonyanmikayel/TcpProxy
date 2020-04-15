@@ -41,7 +41,7 @@ void Connection::onRecv()
 
 void Connection::onClose(IO_ACTION action)
 { 
-	ENTER_FUNC(); 
+	STDLOG(""); 
 	if (!closed)
 	{
 		closed = true;
@@ -66,12 +66,12 @@ Router::Router(const ROUTE& r) :
 	, m_ListenSocket(INVALID_SOCKET)
 	, m_id(++m_ID)
 {
-	ENTER_FUNC();
+	STDLOG("");
 }
 
 Router::~Router()
 {
-	ENTER_FUNC();
+	STDLOG("");
 	Stop();
 }
 
@@ -99,7 +99,7 @@ SOCKET CreateBoundTcpSocket(u_short port = 0)
 
 boolean Router::StartListening(HANDLE hIoCompPort)
 {
-	ENTER_FUNC();
+	STDLOG("");
 	if (!m_Route.IsValid())
 		return false;
 	// Create a listening socket
@@ -134,7 +134,7 @@ boolean Router::StartListening(HANDLE hIoCompPort)
 boolean Router::DoAccept(HANDLE hIoCompPort)
 {
 	// https://docs.microsoft.com/en-us/windows/win32/api/mswsock/nf-mswsock-acceptex
-	ENTER_FUNC();
+	STDLOG("");
 	m_connections.push_back(std::make_unique<Connection>(this));
 	Socket& AcceptSocket = m_connections.back()->m_AcceptSocket;
 
@@ -157,7 +157,6 @@ boolean Router::DoAccept(HANDLE hIoCompPort)
 	}
 
 	DWORD dwBytes = 0;
-	AcceptSocket.m_io_action = IO_ACTION::ACCEPT;
 	BOOL bRetVal = wsock::lpfnAcceptEx(
 		m_ListenSocket, 
 		AcceptSocket.m_s,
@@ -165,7 +164,7 @@ boolean Router::DoAccept(HANDLE hIoCompPort)
 		0, // If dwReceiveDataLength is zero, accepting the connection will not result in a receive operation. Instead, AcceptEx completes as soon as a connection arrives, without waiting for any data
 		Socket::addrBufLen, //The number of bytes reserved for the local address information. This value must be at least 16 bytes more than the maximum address length for the transport protocol in use.
 		Socket::addrBufLen, //The number of bytes reserved for the remote address information. This value must be at least 16 bytes more than the maximum address length for the transport protocol in use.
-		&dwBytes, &AcceptSocket);
+		&dwBytes, &AcceptSocket.m_ovlAccept);
 
 	if (bRetVal == FALSE)
 	{
@@ -176,14 +175,13 @@ boolean Router::DoAccept(HANDLE hIoCompPort)
 			return false;
 		}
 	}
-	//EXIT_FUNC();
 	return true;
 }
 
 boolean Router::DoConnect(Connection* pConnection, HANDLE hIoCompPort)
 {
 	//https://docs.microsoft.com/en-us/windows/win32/api/mswsock/nc-mswsock-lpfn_connectex
-	ENTER_FUNC();
+	STDLOG("");
 	Socket& ConnectSocket = pConnection->m_ConnectSocket;
 	ConnectSocket.m_s = CreateBoundTcpSocket(0);
 	if (ConnectSocket.m_s == INVALID_SOCKET) 
@@ -206,7 +204,6 @@ boolean Router::DoConnect(Connection* pConnection, HANDLE hIoCompPort)
 	server.sin_port = htons(m_Route.remote_port);
 	server.sin_addr.s_addr = inet_addr(m_Route.remote_addr.c_str());
 	STDLOG("Connecting to: %s:%d\n", inet_ntoa(server.sin_addr), m_Route.remote_port);
-	ConnectSocket.m_io_action = IO_ACTION::CONNECT;
 	DWORD dwBytes = 0;
 	BOOL bRetVal = wsock::lpfnConnectEx(
 		ConnectSocket.m_s,
@@ -215,7 +212,7 @@ boolean Router::DoConnect(Connection* pConnection, HANDLE hIoCompPort)
 		NULL,
 		0,
 		&dwBytes,
-		&ConnectSocket);
+		&ConnectSocket.m_ovlConnect);
 
 	if (bRetVal == FALSE) 
 	{
@@ -231,11 +228,10 @@ boolean Router::DoConnect(Connection* pConnection, HANDLE hIoCompPort)
 
 boolean Router::DoRecv(Socket* pSocket, HANDLE hIoCompPort)
 {
-	ENTER_FUNC();
+	STDLOG("Socket %d", pSocket->m_s);
 	DWORD dwBytes = 0, dwFlags = 0;
 	WSABUF wsabuf = { pSocket->bufSize, pSocket->buf };
-	pSocket->m_io_action = IO_ACTION::RECV;
-	int Result = WSARecv(pSocket->m_s, &wsabuf, 1, &dwBytes, &dwFlags, pSocket, 0);
+	int Result = WSARecv(pSocket->m_s, &wsabuf, 1, &dwBytes, &dwFlags, &pSocket->m_ovlRecv, 0);
 
 	if (Result == SOCKET_ERROR) 
 	{
@@ -251,11 +247,10 @@ boolean Router::DoRecv(Socket* pSocket, HANDLE hIoCompPort)
 
 boolean Router::DoSend(Socket* pSocket, DWORD dwNumberOfBytes, char* buf, HANDLE hIoCompPort)
 {
-	ENTER_FUNC();
+	STDLOG("Socket %d dwNumberOfBytes-%d buf=%p", pSocket->m_s, dwNumberOfBytes, buf);
 	DWORD dwBytes = 0, dwFlags = 0;
 	WSABUF wsabuf = { dwNumberOfBytes, buf };
-	pSocket->m_io_action = IO_ACTION::SEND;
-	int Result = WSASend(pSocket->m_s, &wsabuf, 1, &dwBytes, dwFlags, pSocket, 0);
+	int Result = WSASend(pSocket->m_s, &wsabuf, 1, &dwBytes, dwFlags, &pSocket->m_ovlSend, 0);
 
 	if (Result == SOCKET_ERROR)
 	{
@@ -269,17 +264,9 @@ boolean Router::DoSend(Socket* pSocket, DWORD dwNumberOfBytes, char* buf, HANDLE
 	return true;
 }
 
-boolean Router::DoRoute(Socket* pRecvSocket, DWORD dwNumberOfBytes, HANDLE hIoCompPort)
-{
-	ENTER_FUNC();
-	Connection* pConnection = pRecvSocket->m_pConnection;
-	Socket* pSendSocket = pConnection->GetPear(pRecvSocket);
-	return DoSend(pSendSocket, dwNumberOfBytes, pRecvSocket->buf, hIoCompPort);;
-}
-
 void Router::Stop()
 {
-	ENTER_FUNC();
+	STDLOG("");
 	closesocket(m_ListenSocket);
 	for (auto& p : m_connections)
 	{

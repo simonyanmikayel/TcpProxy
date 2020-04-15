@@ -3,6 +3,7 @@
 #include "ROUTE.h"
 
 class Router;
+struct Socket;
 struct Connection;
 
 enum class SOCKET_TYPE { ACCEPT, CONNECT };
@@ -24,32 +25,45 @@ inline char* IoTypeNmae(IO_ACTION i) {
     return r; 
 }
 
-struct Socket : WSAOVERLAPPED
+struct MYOVERLAPPED : OVERLAPPED
+{
+    MYOVERLAPPED(IO_ACTION action, Socket* pSocket) : m_io_action(action), m_pSocket(pSocket) 
+    {
+        memset(this, 0, sizeof(WSAOVERLAPPED));
+    }
+    Socket* GetSocket() { return m_pSocket; }
+    IO_ACTION GetAction() { return m_io_action; }
+private:
+    IO_ACTION m_io_action;
+    Socket* m_pSocket;
+};
+
+struct Socket
 {
     friend struct Connection;
-    Socket(Connection* pConnection) : m_pConnection(pConnection), m_s(INVALID_SOCKET), m_io_action(IO_ACTION::NONE), This(this)
+    Socket(Connection* pConnection) : m_pConnection(pConnection), m_s(INVALID_SOCKET), 
+        m_ovlAccept(IO_ACTION::ACCEPT, this), m_ovlConnect(IO_ACTION::CONNECT, this), m_ovlRecv(IO_ACTION::RECV, this), m_ovlSend(IO_ACTION::SEND, this), This(this)
     { 
-        ENTER_FUNC(); 
-        memset(this, 0, sizeof(WSAOVERLAPPED)); 
+        STDLOG(""); 
         memset(addrBuf, 0, sizeof(addrBuf));
     }
-    ~Socket() { ENTER_FUNC(); CloseSocket(); }
+    ~Socket() { STDLOG(""); CloseSocket(); }
     SOCKET m_s;
-    IO_ACTION m_io_action;
     Connection* m_pConnection;
     void* This;
     static const size_t bufSize = 1024 * 128;
     char buf[bufSize];
     static const int addrBufLen = sizeof(sockaddr_in) + 16;
     char addrBuf[2 * addrBufLen];
+    MYOVERLAPPED m_ovlAccept, m_ovlConnect, m_ovlRecv, m_ovlSend;
 private:
-    void CloseSocket() { ENTER_FUNC(); if (m_s != INVALID_SOCKET) { closesocket(m_s), m_s = INVALID_SOCKET; } }
+    void CloseSocket() { STDLOG(""); if (m_s != INVALID_SOCKET) { closesocket(m_s), m_s = INVALID_SOCKET; } }
 };
 
 struct Connection
 {
-    Connection(Router* pRouter) : m_pRouter(pRouter), m_AcceptSocket(this), m_ConnectSocket(this) { ENTER_FUNC(); GetLocalTime(&initTime); }
-    ~Connection() { ENTER_FUNC(); m_AcceptSocket.CloseSocket(); m_ConnectSocket.CloseSocket(); }
+    Connection(Router* pRouter) : m_pRouter(pRouter), m_AcceptSocket(this), m_ConnectSocket(this) { STDLOG(""); GetLocalTime(&initTime); }
+    ~Connection() { STDLOG(""); m_AcceptSocket.CloseSocket(); m_ConnectSocket.CloseSocket(); }
     void close(IO_ACTION action) { onClose(action); };
     void onClose(IO_ACTION action);
     void onConnect();
@@ -84,7 +98,6 @@ public:
     boolean DoConnect(Connection* pConnection, HANDLE hIoCompPort);
     boolean DoRecv(Socket* pSocket, HANDLE hIoCompPort);
     boolean DoSend(Socket* pSocket, DWORD dwNumberOfBytes, char* buf, HANDLE hIoCompPort);
-    boolean DoRoute(Socket* pRecvSocket, DWORD dwNumberOfBytes, HANDLE hIoCompPort);
     DWORD ID() const { return m_id; }
     void Stop();
     const ROUTE* GetRote() const { return &m_Route; }

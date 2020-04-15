@@ -7,20 +7,20 @@ Proxy gProxy;
 
 Proxy::Proxy()
 {
-	ENTER_FUNC();
+	STDLOG("");
 	m_bStoped = true;
 	m_hThreadStarted = CreateEvent(0, TRUE, FALSE, 0);
 }
 
 Proxy::~Proxy()
 {
-	ENTER_FUNC();
+	STDLOG("");
 	Stop();
 }
 
 boolean Proxy::Start(const std::vector<ROUTE>& routes)
 {
-	ENTER_FUNC();
+	STDLOG("");
 	if (Running())
 		return true;
 	m_hIoCompPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, (u_long)0, 0);
@@ -40,7 +40,7 @@ boolean Proxy::Start(const std::vector<ROUTE>& routes)
 
 void Proxy::Stop()
 {
-	ENTER_FUNC();
+	STDLOG("");
 	if (!Running())
 		return;
 
@@ -54,7 +54,7 @@ void Proxy::Stop()
 
 void Proxy::AddRoute(const ROUTE& r)
 {
-	ENTER_FUNC();
+	STDLOG("");
 	m_Routers.push_back(std::make_unique<Router>(r));
 	std::unique_ptr<Router>& router = m_Routers.back();
 	gArchive.addRouter(router.get());
@@ -72,7 +72,7 @@ void Proxy::ShowRoutes()
 
 DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 {
-	ENTER_FUNC();
+	STDLOG("");
 	Proxy* pProxy = reinterpret_cast<Proxy*>(lpParameter);
 	SetEvent(pProxy->m_hThreadStarted);
 
@@ -96,71 +96,73 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 		for (ULONG i = 0; i < ulNumEntriesRemoved; i++)
 		{
 			OVERLAPPED_ENTRY& entry = overlapped_entries[i];
-			Socket* pSocket = (Socket*)entry.lpOverlapped;
+			MYOVERLAPPED* pMyoverlapped = (MYOVERLAPPED*)entry.lpOverlapped;
+			Socket* pSocket = pMyoverlapped->GetSocket();
+			IO_ACTION action = pMyoverlapped->GetAction();
 			Connection* pConnection = pSocket->m_pConnection;
-			if (pSocket->This != (void*)pSocket || pSocket->m_io_action <= IO_ACTION::NONE || pSocket->m_io_action >= IO_ACTION::PROXY_STOP || (!pConnection->IsAccepSocket(pSocket) && !pConnection->IsConnectSocket(pSocket)) )
+			if (pSocket->This != (void*)pSocket || action <= IO_ACTION::NONE || action >= IO_ACTION::PROXY_STOP || (!pConnection->IsAccepSocket(pSocket) && !pConnection->IsConnectSocket(pSocket)) )
 			{
 				Helpers::SysErrMessageBox("Implementation error 1");
 				break;
 			}
 			else
 			{
-				ULONG_PTR err = pSocket->Internal;
+				ULONG_PTR err = pMyoverlapped->Internal;
 				Router* pRouter = pConnection->m_pRouter;
 				pConnection->m_err = err;
 
-				STDLOG("pSocket: %s action=%s bytes=%d err=%X", 
-					SocketTypeNmae(pConnection->SocketType(pSocket)), 
-					IoTypeNmae(pSocket->m_io_action), 
+				STDLOG("pSocket: %s(%d) action=%s bytes=%d err=%X", 
+					SocketTypeNmae(pConnection->SocketType(pSocket)), pSocket->m_s,
+					IoTypeNmae(action),
 					entry.dwNumberOfBytesTransferred, err);
 
-				if (IO_ACTION::ACCEPT == pSocket->m_io_action)
+				if (IO_ACTION::ACCEPT == action)
 				{
 					if (!pRouter->DoAccept(pProxy->m_hIoCompPort)) //loop of accept
 						pConnection->close(IO_ACTION::ACCEPT);
 				}
-				if (err == 0 && entry.dwNumberOfBytesTransferred == 0 && (IO_ACTION::RECV == pSocket->m_io_action || IO_ACTION::SEND == pSocket->m_io_action))
+				if (err == 0 && entry.dwNumberOfBytesTransferred == 0 && (IO_ACTION::RECV == action || IO_ACTION::SEND == action))
 				{
 					err = SOCKET_ERROR;
 				}
 				if (err == 0)
 				{
-					if (IO_ACTION::ACCEPT == pSocket->m_io_action)
+					if (IO_ACTION::ACCEPT == action)
 					{
 						gArchive.addConnection(pConnection);
 						if (!pRouter->DoConnect(pConnection, pProxy->m_hIoCompPort))
 							pConnection->close(IO_ACTION::CONNECT);
 					}
-					else if (IO_ACTION::CONNECT == pSocket->m_io_action)
+					else if (IO_ACTION::CONNECT == action)
 					{
 						pConnection->onConnect();
 						if (!pRouter->DoRecv(&pConnection->m_AcceptSocket, pProxy->m_hIoCompPort) ||
 							!pRouter->DoRecv(&pConnection->m_ConnectSocket, pProxy->m_hIoCompPort))
 							pConnection->close(IO_ACTION::RECV);
 					}
-					else if (IO_ACTION::RECV == pSocket->m_io_action)
+					else if (IO_ACTION::RECV == action)
 					{
 						gArchive.addRecv(pSocket, pSocket->buf, entry.dwNumberOfBytesTransferred);
 						pConnection->onRecv();
-						if (!pRouter->DoRoute(pSocket, entry.dwNumberOfBytesTransferred, pProxy->m_hIoCompPort) ||
-							!pRouter->DoRecv(pSocket, pProxy->m_hIoCompPort)) // recive loop
+						Socket* pSendSocket = pConnection->GetPear(pSocket);
+						if (!pRouter->DoSend(pSendSocket, entry.dwNumberOfBytesTransferred, pSocket->buf, pProxy->m_hIoCompPort))
 							pConnection->close(IO_ACTION::RECV);
 					}
-					else if (IO_ACTION::SEND == pSocket->m_io_action)
+					else if (IO_ACTION::SEND == action)
 					{
-						if (!pRouter->DoRecv(pSocket, pProxy->m_hIoCompPort)) // recive loop
+						Socket* pRecvSocket = pConnection->GetPear(pSocket);
+						if (!pRouter->DoRecv(pRecvSocket, pProxy->m_hIoCompPort)) // recive loop
 							pConnection->close(IO_ACTION::SEND);
 					}
 				}
 				else
 				{
 					if (err != STATUS_PENDING)
-						pConnection->close(pSocket->m_io_action);
+						pConnection->close(action);
 				}
 			}
 		}
 	}
 
-	EXIT_FUNC();
 	return 0;
 }
