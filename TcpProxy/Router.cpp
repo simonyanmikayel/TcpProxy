@@ -9,6 +9,23 @@
 DWORD Router::m_ID = 0;
 DWORD Connection::m_ID = 0;
 
+OVERLAPPED* Socket::GetOverlapped(IO_ACTION action)
+{
+	MYOVERLAPPED* p = nullptr;
+	if (action == IO_ACTION::ACCEPT)
+		p = &m_ovlAccept;
+	else if (action == IO_ACTION::CONNECT)
+		p = &m_ovlConnect;
+	else if (action == IO_ACTION::RECV)
+		p = &m_ovlRecv;
+	else if (action == IO_ACTION::SEND)
+		p = &m_ovlSend;
+	else
+		p = &m_ovlError;
+	p->Init();
+	return p;
+}
+
 void Connection::onConnect()
 {
 	opened = true;
@@ -164,7 +181,7 @@ boolean Router::DoAccept(HANDLE hIoCompPort)
 		0, // If dwReceiveDataLength is zero, accepting the connection will not result in a receive operation. Instead, AcceptEx completes as soon as a connection arrives, without waiting for any data
 		Socket::addrBufLen, //The number of bytes reserved for the local address information. This value must be at least 16 bytes more than the maximum address length for the transport protocol in use.
 		Socket::addrBufLen, //The number of bytes reserved for the remote address information. This value must be at least 16 bytes more than the maximum address length for the transport protocol in use.
-		&dwBytes, &AcceptSocket.m_ovlAccept);
+		&dwBytes, AcceptSocket.GetOverlapped(IO_ACTION::ACCEPT));
 
 	if (bRetVal == FALSE)
 	{
@@ -212,7 +229,7 @@ boolean Router::DoConnect(Connection* pConnection, HANDLE hIoCompPort)
 		NULL,
 		0,
 		&dwBytes,
-		&ConnectSocket.m_ovlConnect);
+		ConnectSocket.GetOverlapped(IO_ACTION::CONNECT));
 
 	if (bRetVal == FALSE) 
 	{
@@ -231,7 +248,7 @@ boolean Router::DoRecv(Socket* pSocket, HANDLE hIoCompPort)
 	STDLOG("Socket %d", pSocket->m_s);
 	DWORD dwBytes = 0, dwFlags = 0;
 	WSABUF wsabuf = { pSocket->bufSize, pSocket->buf };
-	int Result = WSARecv(pSocket->m_s, &wsabuf, 1, &dwBytes, &dwFlags, &pSocket->m_ovlRecv, 0);
+	int Result = WSARecv(pSocket->m_s, &wsabuf, 1, &dwBytes, &dwFlags, pSocket->GetOverlapped(IO_ACTION::RECV), 0);
 
 	if (Result == SOCKET_ERROR) 
 	{
@@ -250,7 +267,7 @@ boolean Router::DoSend(Socket* pSocket, DWORD dwNumberOfBytes, char* buf, HANDLE
 	STDLOG("Socket %d dwNumberOfBytes-%d buf=%p", pSocket->m_s, dwNumberOfBytes, buf);
 	DWORD dwBytes = 0, dwFlags = 0;
 	WSABUF wsabuf = { dwNumberOfBytes, buf };
-	int Result = WSASend(pSocket->m_s, &wsabuf, 1, &dwBytes, dwFlags, &pSocket->m_ovlSend, 0);
+	int Result = WSASend(pSocket->m_s, &wsabuf, 1, &dwBytes, dwFlags, pSocket->GetOverlapped(IO_ACTION::SEND), 0);
 
 	if (Result == SOCKET_ERROR)
 	{

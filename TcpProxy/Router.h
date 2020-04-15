@@ -27,10 +27,8 @@ inline char* IoTypeNmae(IO_ACTION i) {
 
 struct MYOVERLAPPED : OVERLAPPED
 {
-    MYOVERLAPPED(IO_ACTION action, Socket* pSocket) : m_io_action(action), m_pSocket(pSocket) 
-    {
-        memset(this, 0, sizeof(WSAOVERLAPPED));
-    }
+    MYOVERLAPPED(IO_ACTION action, Socket* pSocket) : m_io_action(action), m_pSocket(pSocket) {}
+    void Init() { memset(this, 0, sizeof(WSAOVERLAPPED)); }
     Socket* GetSocket() { return m_pSocket; }
     IO_ACTION GetAction() { return m_io_action; }
 private:
@@ -42,12 +40,18 @@ struct Socket
 {
     friend struct Connection;
     Socket(Connection* pConnection) : m_pConnection(pConnection), m_s(INVALID_SOCKET), 
-        m_ovlAccept(IO_ACTION::ACCEPT, this), m_ovlConnect(IO_ACTION::CONNECT, this), m_ovlRecv(IO_ACTION::RECV, this), m_ovlSend(IO_ACTION::SEND, this), This(this)
+        m_ovlAccept(IO_ACTION::ACCEPT, this), 
+        m_ovlConnect(IO_ACTION::CONNECT, this), 
+        m_ovlRecv(IO_ACTION::RECV, this), 
+        m_ovlSend(IO_ACTION::SEND, this),
+        m_ovlError(IO_ACTION::PROXY_STOP, this),
+        This(this)
     { 
         STDLOG(""); 
         memset(addrBuf, 0, sizeof(addrBuf));
     }
     ~Socket() { STDLOG(""); CloseSocket(); }
+    OVERLAPPED* GetOverlapped(IO_ACTION action);
     SOCKET m_s;
     Connection* m_pConnection;
     void* This;
@@ -55,8 +59,8 @@ struct Socket
     char buf[bufSize];
     static const int addrBufLen = sizeof(sockaddr_in) + 16;
     char addrBuf[2 * addrBufLen];
-    MYOVERLAPPED m_ovlAccept, m_ovlConnect, m_ovlRecv, m_ovlSend;
 private:
+    MYOVERLAPPED m_ovlAccept, m_ovlConnect, m_ovlRecv, m_ovlSend, m_ovlError;
     void CloseSocket() { STDLOG(""); if (m_s != INVALID_SOCKET) { closesocket(m_s), m_s = INVALID_SOCKET; } }
 };
 
