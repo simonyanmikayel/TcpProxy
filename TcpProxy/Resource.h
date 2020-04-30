@@ -8,7 +8,7 @@
 #define IDD_ABOUTBOX                    103
 #define IDM_ABOUT                       104
 #define IDM_EXIT                        105
-#define ID_VIEW_SETTINGS           106
+#define ID_VIEW_SETTINGS                106
 #define ID_VIEW_STARTPROXY              107
 #define ID_VIEW_STOPPROXY               108
 #define ID_VIEW_CLEARLOG                109
@@ -50,7 +50,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        150
 #define _APS_NEXT_COMMAND_VALUE         32773
-#define _APS_NEXT_CONTROL_VALUE         1008
+#define _APS_NEXT_CONTROL_VALUE         1009
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

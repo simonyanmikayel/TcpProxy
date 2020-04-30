@@ -220,6 +220,9 @@
   <ItemGroup>
     <Image Include="res\icon1.ico" />
     <Image Include="res\ICON_TREE_CONN.ico" />
+    <Image Include="res\ICON_TREE_CONN_CLOSED.ico" />
+    <Image Include="res\ICON_TREE_CONN_CONNECTED.ico" />
+    <Image Include="res\ICON_TREE_CONN_INITIAL.ico" />
     <Image Include="res\ICON_TREE_RECV_LOCAL.ico" />
     <Image Include="res\ICON_TREE_RECV_REMOTE.ico" />
     <Image Include="res\ICON_TREE_ROOT.ico" />
@@ -230,6 +233,7 @@
     <Image Include="res\tree_node_colapsed.ico" />
     <Image Include="res\tree_node_expanded.ico" />
     <Image Include="res\tree_node_unchecked.ico" />
+    <Image Include="res\ttf_glyph.bmp" />
     <Image Include="small.ico" />
     <Image Include="TcpProxy.ico" />
   </ItemGroup>
