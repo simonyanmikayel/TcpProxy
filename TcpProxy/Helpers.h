@@ -19,4 +19,6 @@ namespace Helpers
 	size_t HexDump(BYTE* pBuf, size_t cBuf, const BYTE* pData, size_t cData, int cColumn);
 	void MaskWhiteSpace(std::string& str);
 	void UnmaskWhiteSpace(std::string& str);
+	bool CaseInsensitiveStringLesThan(const string& str1, const string& str2);
 };
+

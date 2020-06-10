@@ -9,72 +9,63 @@ LRESULT DlgRouteTable::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
 {
     m_RouteList.Attach(GetDlgItem(IDC_ROUTE_LIST));
     //m_RouteList.ModifyStyleEx(0, LVS_EX_FULLROWSELECT);
-    ListView_SetExtendedListViewStyle(m_RouteList, LVS_EX_FULLROWSELECT);
-    m_RouteList.InsertColumn(0, _T("Route name"), LVCFMT_LEFT, 200);
+    ListView_SetExtendedListViewStyle(m_RouteList, LVS_EX_FULLROWSELECT | LVS_EX_CHECKBOXES);
+    m_RouteList.InsertColumn(0, _T("Route name"), LVCFMT_LEFT, 300);
     m_RouteList.InsertColumn(1, _T("Local port"), LVCFMT_LEFT, 80);
     m_RouteList.InsertColumn(2, _T("Remote port"), LVCFMT_LEFT, 90);
-    m_RouteList.InsertColumn(3, _T("Remote address"), LVCFMT_LEFT, 210);
+    m_RouteList.InsertColumn(3, _T("Remote address"), LVCFMT_LEFT, 180);
 
     auto& r = gSettings.routes.Get();
     for (int i = 0; i < r.size(); i++)
     {
-        AddRoute(r[i]);
+        routes.push_back(r[i]);
     }
-    m_RouteList.SelectItem(0);
+    ShowRoutes(0);
 
     CenterWindow(GetParent());
     return TRUE;
 }
 
-LRESULT DlgRouteTable::OnCloseCmd(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+bool myfunction(ROUTE &r1, ROUTE& r2)
+{ 
+    //return Helpers::CaseInsensitiveStringLesThan(r1.name, r2.name);
+    return (r1.name < r2.name);
+}
+
+void DlgRouteTable::ShowRoutes(int nItem)
 {
-    if (wID == IDOK)
+    if (nItem < 0)
+        nItem = m_RouteList.GetSelectedIndex();
+    if (nItem < 0)
+        nItem = m_RouteList.GetItemCount() - 1;
+
+    //sort routes
+    for (int i = 0; i < routes.size(); i++)
     {
-        //save settings
+        routes[i].selected = (i == nItem);
     }
-    routes.clear();
-    int count = m_RouteList.GetItemCount();
-    if (count > 0)
+    std::sort(routes.begin(), routes.end(), myfunction);
+
+    m_RouteList.DeleteAllItems();
+    for (int i = 0; i < routes.size(); i++)
     {
-        routes.reserve(count);
-        ROUTE r;
-        for (int i = 0; i < count; i++)
+        nItem = m_RouteList.GetItemCount();
+        m_RouteList.AddItem(nItem, 0, "");
+        m_RouteList.SetItem(nItem, 0, LVIF_TEXT, routes[i].name.c_str(), 0, 0, 0, 0);
+        m_RouteList.SetItem(nItem, 1, LVIF_TEXT, Helpers::int2char(routes[i].local_port), 0, 0, 0, 0);
+        m_RouteList.SetItem(nItem, 2, LVIF_TEXT, Helpers::int2char(routes[i].remote_port), 0, 0, 0, 0);
+        m_RouteList.SetItem(nItem, 3, LVIF_TEXT, routes[i].remote_addr.c_str(), 0, 0, 0, 0);
+    }
+
+    for (int i = 0; i < routes.size(); i++)
+    {
+        if (routes[i].selected)
         {
-            GetRoute(r, i);
-            routes.push_back(r);
+            nItem = i;
+            m_RouteList.SelectItem(nItem);
+            break;
         }
     }
-    EndDialog(wID);
-    return 0;
-}
-
-void DlgRouteTable::GetRoute(ROUTE& r, int i)
-{
-    CString str;
-    m_RouteList.GetItemText(i, 0, str);
-    r.name = str;
-    m_RouteList.GetItemText(i, 1, str);
-    r.local_port = atoi(str);
-    m_RouteList.GetItemText(i, 2, str);
-    r.remote_port = atoi(str);
-    m_RouteList.GetItemText(i, 3, str);
-    r.remote_addr = str;
-}
-
-void DlgRouteTable::SetRoute(const ROUTE& r, int nItem)
-{
-    m_RouteList.SetItem(nItem, 0, LVIF_TEXT, r.name.c_str(), 0, 0, 0, 0);
-    m_RouteList.SetItem(nItem, 1, LVIF_TEXT, Helpers::int2char(r.local_port), 0, 0, 0, 0);
-    m_RouteList.SetItem(nItem, 2, LVIF_TEXT, Helpers::int2char(r.remote_port), 0, 0, 0, 0);
-    m_RouteList.SetItem(nItem, 3, LVIF_TEXT, r.remote_addr.c_str(), 0, 0, 0, 0);
-    m_RouteList.SelectItem(nItem);
-}
-
-void DlgRouteTable::AddRoute(const ROUTE& r)
-{
-    int nItem = m_RouteList.GetItemCount();
-    m_RouteList.AddItem(nItem, 0, "");
-    SetRoute(r, nItem);
 }
 
 LRESULT DlgRouteTable::OnCmdButtonAdd(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
@@ -83,14 +74,45 @@ LRESULT DlgRouteTable::OnCmdButtonAdd(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /
     DlgRoute dlg(&r);
     if (IDOK == dlg.DoModal())
     {
-        AddRoute(dlg.m_route);
+        routes.push_back(dlg.m_route);
+        ShowRoutes((int)routes.size() - 1);
     }
     return 0;
 }
 
 LRESULT DlgRouteTable::OnCmdButtonEdit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-    EdotRoute();
+    int nItem = m_RouteList.GetSelectedIndex();
+    if (nItem >= 0)
+    {
+        ROUTE r;
+        CString str;
+        m_RouteList.GetItemText(nItem, 0, str);
+        r.name = str;
+        m_RouteList.GetItemText(nItem, 1, str);
+        r.local_port = atoi(str);
+        m_RouteList.GetItemText(nItem, 2, str);
+        r.remote_port = atoi(str);
+        m_RouteList.GetItemText(nItem, 3, str);
+        r.remote_addr = str;
+
+        DlgRoute dlg(&r);
+        if (IDOK == dlg.DoModal())
+        {
+            routes[nItem] = dlg.m_route;
+            ShowRoutes(nItem);
+        }
+    }
+    return 0;
+}
+
+LRESULT DlgRouteTable::OnDblClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/)
+{
+    if (pnmh->hwndFrom == m_RouteList)
+    {
+        BOOL bHandled;
+        OnCmdButtonEdit(0, 0, 0, bHandled);
+    }
     return 0;
 }
 
@@ -99,36 +121,93 @@ LRESULT DlgRouteTable::OnCmdButtonDelete(WORD /*wNotifyCode*/, WORD /*wID*/, HWN
     int nItem = m_RouteList.GetSelectedIndex();
     if (nItem >= 0)
     {
-        m_RouteList.DeleteItem(nItem);
-        if (nItem > 0)
-            m_RouteList.SelectItem(nItem - 1);
-        else if (m_RouteList.GetItemCount() > 0)
-            m_RouteList.SelectItem(0);
+        routes.erase(routes.begin() + nItem);
+        ShowRoutes(nItem > 0 ? nItem - 1 : 0);
     }
     return 0;
 }
 
-void DlgRouteTable::EdotRoute()
+LRESULT DlgRouteTable::OnCloseCmd(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-    int nItem = m_RouteList.GetSelectedIndex();
-    if (nItem >= 0)
+    if (wID == IDOK)
     {
-        ROUTE r;
-        GetRoute(r, nItem);
-        DlgRoute dlg(&r);
-        if (IDOK == dlg.DoModal())
-        {
-            SetRoute(dlg.m_route, nItem);
-        }
+        //save settings
     }
+    EndDialog(wID);
+    return 0;
 }
 
-LRESULT DlgRouteTable::OnDblClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/)
+LRESULT DlgRouteTable::OnCmdButtonImport(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
-    if (pnmh->hwndFrom == m_RouteList)
-    {
-        //LPNMITEMACTIVATE lpnmitemactivate = (LPNMITEMACTIVATE)pnmh;
-        EdotRoute();
+    CFileDialog dlg(TRUE);
+    if (!dlg.DoModal() || !dlg.m_ofn.lpstrFile[0])
+        return 0;
+
+    FILE* fp;
+    if (0 != fopen_s(&fp, dlg.m_ofn.lpstrFile, "r")) {
+        Helpers::SysErrMessageBox(TEXT("Cannot open file %s"), dlg.m_ofn.lpstrFile);
+        return 0;
     }
+
+    routes.clear();
+    unsigned int  enabled;
+    unsigned int  local_port;
+    unsigned int  remote_port;
+    char str[512];
+    
+    while (3 == fscanf_s(fp, "%d;%d;%d;", &enabled, &local_port, &remote_port))
+    {
+        if (!fgets(str, sizeof(str), fp))
+            break;
+        str[511] = 0;
+        size_t c = strlen(str);
+        if (c<2)
+            break;
+        if (str[c - 1] == '\n')
+        {
+            str[c - 1] = 0;
+        }
+        ROUTE r;
+        r.enabled = enabled;
+        r.local_port = local_port;
+        r.remote_port = remote_port;
+        char* sep = strchr(str, ';');
+        if (!sep)
+            break;
+        *sep = 0;
+        r.name = str;
+        r.remote_addr = sep+1;
+        routes.push_back(r);
+    }
+    fclose(fp);
+
+    ShowRoutes(0);
+    return 0;
+}
+
+LRESULT DlgRouteTable::OnCmdButtonExport(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    CFileDialog dlg(FALSE);
+    if (!dlg.DoModal() || !dlg.m_ofn.lpstrFile[0])
+        return 0;
+
+    FILE* fp;
+    if (0 != fopen_s(&fp, dlg.m_ofn.lpstrFile, "w")) {
+        Helpers::SysErrMessageBox(TEXT("Cannot open file %s"), dlg.m_ofn.lpstrFile);
+        return 0;
+    }
+
+    for (int i = 0; i < routes.size(); i++)
+    {
+        fprintf(fp, "%d;%d;%d;%s;%s\n",
+            routes[i].enabled,
+            routes[i].local_port,
+            routes[i].remote_port,
+            routes[i].name.c_str(),
+            routes[i].remote_addr.c_str()
+        );
+    }
+    fclose(fp);
+
     return 0;
 }

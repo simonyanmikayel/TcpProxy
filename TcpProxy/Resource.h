@@ -36,7 +36,10 @@
 #define IDC_BUTTON_EDIT                 1002
 #define IDC_BUTTON_DELETE               1003
 #define IDC_EDIT_NAME                   1004
+#define IDC_BUTTON_DELETE2              1004
+#define IDC_BUTTON_EXPORT               1004
 #define IDC_EDIT_LOCAL_PORT             1005
+#define IDC_BUTTON_IMPORT               1005
 #define IDC_EDIT_REMOTE_PORT            1006
 #define IDC_BTN_FONT                    1007
 #define IDC_EDIT_REMOTE_ADDR            1007

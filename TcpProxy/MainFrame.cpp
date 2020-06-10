@@ -143,28 +143,30 @@ LRESULT CMainFrame::OnClearLog(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCt
 LRESULT CMainFrame::OnRouteTable(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
     DlgRouteTable dlg;
-    dlg.DoModal();
-    auto& v1 = dlg.routes;
-    auto& v2 = gSettings.routes.Get();
-    bool isEqual = true;
-    if (v1.size() != v2.size())
-        isEqual = false;
-    if (isEqual)
+    if (IDOK == dlg.DoModal())
     {
-        for (int i = 0; i < v1.size(); i++)
+        auto& v1 = dlg.routes;
+        auto& v2 = gSettings.routes.Get();
+        bool isEqual = true;
+        if (v1.size() != v2.size())
+            isEqual = false;
+        if (isEqual)
         {
-            if (!(v1[i] == v2[i]))
+            for (int i = 0; i < v1.size(); i++)
             {
-                isEqual = false;
-                break;
+                if (!(v1[i] == v2[i]))
+                {
+                    isEqual = false;
+                    break;
+                }
             }
         }
-    }
-    if (!isEqual)
-    {
-        gSettings.routes.Set(dlg.routes);
-        StopLogging();
-        StartLogging();
+        if (!isEqual)
+        {
+            gSettings.routes.Set(dlg.routes);
+            StopLogging();
+            StartLogging();
+        }
     }
     return 0;
 }

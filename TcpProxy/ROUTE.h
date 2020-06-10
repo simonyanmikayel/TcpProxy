@@ -6,6 +6,8 @@ struct ROUTE
     std::string name;
     u_short     local_port = 0;
     u_short     remote_port = 0;
+    u_short     enabled = 0;
+    boolean     selected = 0;
     std::string remote_addr;
     boolean IsValid() { return local_port && remote_port && remote_addr.size(); }
     void deserialize(std::stringstream& s)
