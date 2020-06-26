@@ -52,29 +52,36 @@ ARR_VALUE<T>::ARR_VALUE(LPCTSTR sz) : szRegKey(sz)
 	gSettings.CheckData(szRegKey, &cbData, &dwDataTye);
 	if (dwDataTye == REG_SZ && cbData > 0 && cbData < MAX_DATA_SIZE)
 	{
-		std::string str;
-		str.resize(cbData);
-		if (gSettings.ReadSTR(szRegKey, (char*)str.c_str(), (int)cbData))
+		try 
 		{
-//			str = "1\n2\n3\n4\n5\n";
-			//Helpers::MaskWhiteSpace(str);
-			std::stringstream s(str);
-
-			std::string strCount;
-			getline(s, strCount);
-			int count = std::stoi(strCount);
-			//s.setf(std::ios::skipws, 0);
-			if (count > 0 && count < MAX_ARRAY_SIZE)
+			std::string str;
+			str.resize(cbData);
+			if (gSettings.ReadSTR(szRegKey, (char*)str.c_str(), (int)cbData))
 			{
-				val.clear();
-				val.reserve(count);
-				for (int i = 0; i < count; i++)
+				//			str = "1\n2\n3\n4\n5\n";
+							//Helpers::MaskWhiteSpace(str);
+				std::stringstream s(str);
+
+				std::string strCount;
+				getline(s, strCount);
+				int count = std::stoi(strCount);
+				//s.setf(std::ios::skipws, 0);
+				if (count > 0 && count < MAX_ARRAY_SIZE)
 				{
-					T t;
-					t.deserialize(s);
-					val.push_back(t);
+					val.clear();
+					val.reserve(count);
+					for (int i = 0; i < count; i++)
+					{
+						T t;
+						t.deserialize(s);
+						val.push_back(t);
+					}
 				}
 			}
+		}
+		catch (...) 
+		{
+			val.clear();
 		}
 	}
 }

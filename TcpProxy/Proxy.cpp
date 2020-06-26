@@ -33,7 +33,8 @@ boolean Proxy::Start(const std::vector<ROUTE>& routes)
 
 	for (auto& r : routes)
 	{
-		AddRoute(r);
+		if (r.enabled)
+			AddRoute(r);
 	}
 	return true;
 }

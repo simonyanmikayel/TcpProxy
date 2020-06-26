@@ -17,7 +17,8 @@ public:
         COMMAND_HANDLER(IDC_BUTTON_DELETE, BN_CLICKED, OnCmdButtonDelete)
         COMMAND_HANDLER(IDC_BUTTON_IMPORT, BN_CLICKED, OnCmdButtonImport)
         COMMAND_HANDLER(IDC_BUTTON_EXPORT, BN_CLICKED, OnCmdButtonExport)
-        NOTIFY_CODE_HANDLER(NM_DBLCLK, OnDblClick)
+        NOTIFY_HANDLER(IDC_ROUTE_LIST, NM_DBLCLK, OnListDblClick)
+        NOTIFY_HANDLER(IDC_ROUTE_LIST, LVN_ITEMCHANGED, OnListItemChanged)
         REFLECT_NOTIFICATIONS()
     END_MSG_MAP()
 
@@ -31,7 +32,8 @@ public:
     LRESULT OnCmdButtonDelete(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnCmdButtonImport(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnCmdButtonExport(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
-    LRESULT OnDblClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/);
+    LRESULT OnListDblClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/);
+    LRESULT OnListItemChanged(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/);
 
     //void GetRoute(ROUTE& r, int iItem);
     //void SetRoute(const ROUTE& r, int iItem);

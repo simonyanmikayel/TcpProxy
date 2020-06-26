@@ -55,6 +55,7 @@ void DlgRouteTable::ShowRoutes(int nItem)
         m_RouteList.SetItem(nItem, 1, LVIF_TEXT, Helpers::int2char(routes[i].local_port), 0, 0, 0, 0);
         m_RouteList.SetItem(nItem, 2, LVIF_TEXT, Helpers::int2char(routes[i].remote_port), 0, 0, 0, 0);
         m_RouteList.SetItem(nItem, 3, LVIF_TEXT, routes[i].remote_addr.c_str(), 0, 0, 0, 0);
+        m_RouteList.SetCheckState(nItem, routes[i].enabled);
     }
 
     for (int i = 0; i < routes.size(); i++)
@@ -106,13 +107,21 @@ LRESULT DlgRouteTable::OnCmdButtonEdit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND 
     return 0;
 }
 
-LRESULT DlgRouteTable::OnDblClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/)
+LRESULT DlgRouteTable::OnListDblClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/)
 {
-    if (pnmh->hwndFrom == m_RouteList)
-    {
-        BOOL bHandled;
-        OnCmdButtonEdit(0, 0, 0, bHandled);
-    }
+    BOOL bHandled;
+    OnCmdButtonEdit(0, 0, 0, bHandled);
+    return 0;
+}
+
+LRESULT DlgRouteTable::OnListItemChanged(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/)
+{
+    LPNMLISTVIEW pnmv = (LPNMLISTVIEW)pnmh;
+    BOOL oldStateChecked = ((pnmv->uOldState & LVIS_STATEIMAGEMASK) >> 12) - 1;
+    BOOL newStateChecked = ((pnmv->uNewState & LVIS_STATEIMAGEMASK) >> 12) - 1;
+
+    if (oldStateChecked >= 0 && oldStateChecked != newStateChecked)
+        routes[pnmv->iItem].enabled = newStateChecked; // m_RouteList.GetCheckState(pnmv->iItem);
     return 0;
 }
 
