@@ -75,6 +75,7 @@ LRESULT DlgRouteTable::OnCmdButtonAdd(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /
     DlgRoute dlg(&r);
     if (IDOK == dlg.DoModal())
     {
+        dlg.m_route.enabled = true;
         routes.push_back(dlg.m_route);
         ShowRoutes((int)routes.size() - 1);
     }
@@ -100,6 +101,7 @@ LRESULT DlgRouteTable::OnCmdButtonEdit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND 
         DlgRoute dlg(&r);
         if (IDOK == dlg.DoModal())
         {
+            dlg.m_route.enabled = routes[nItem].enabled;
             routes[nItem] = dlg.m_route;
             ShowRoutes(nItem);
         }
