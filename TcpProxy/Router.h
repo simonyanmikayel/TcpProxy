@@ -66,16 +66,19 @@ private:
 
 struct Connection
 {
-    Connection(Router* pRouter) : m_pRouter(pRouter), m_AcceptSocket(this), m_ConnectSocket(this) { STDLOG(""); GetLocalTime(&initTime); }
+    Connection(Router* pRouter) : m_pRouter(pRouter), m_AcceptSocket(this), m_ConnectSocket(this) { 
+        STDLOG(""); GetLocalTime(&initTime); 
+    }
     ~Connection() { STDLOG(""); m_AcceptSocket.CloseSocket(); m_ConnectSocket.CloseSocket(); }
     void close(IO_ACTION action) { onClose(action); };
     void onClose(IO_ACTION action);
     void onConnect();
     void onRecv();
-    SOCKET_TYPE SocketType(const Socket* pSocket) { return pSocket == &m_AcceptSocket ? SOCKET_TYPE::ACCEPT : SOCKET_TYPE::CONNECT; }
-    Socket* GetPear(Socket* pSocket) { return pSocket == &m_AcceptSocket ? &m_ConnectSocket : &m_AcceptSocket; }
-    boolean IsAccepSocket(Socket* pSocket) { return pSocket == &m_AcceptSocket; }
-    boolean IsConnectSocket(Socket* pSocket) { return pSocket == &m_ConnectSocket; }
+    SOCKET_TYPE SocketType(const Socket* pSocket) const { return pSocket == &m_AcceptSocket ? SOCKET_TYPE::ACCEPT : SOCKET_TYPE::CONNECT; }
+    Socket* GetPear(const Socket* pSocket) { return pSocket == &m_AcceptSocket ? &m_ConnectSocket : &m_AcceptSocket; }
+    boolean IsAccepSocket(const Socket* pSocket) const { return pSocket == &m_AcceptSocket; }
+    boolean IsConnectSocket(const Socket* pSocket) const { return pSocket == &m_ConnectSocket; }
+    boolean IsOpen() { return opened && !closed; };
     DWORD ID() const { return m_id; }
     Router* m_pRouter;
     Socket m_AcceptSocket;
@@ -85,6 +88,7 @@ struct Connection
     SYSTEMTIME initTime = { 0 };
     SYSTEMTIME connectTime = {0};
     SYSTEMTIME closeTime = { 0 };
+    DWORD      closeTimeout = INFINITE;
 private:
     boolean opened = false;
     boolean closed = false;
@@ -105,6 +109,7 @@ public:
     DWORD ID() const { return m_id; }
     void Stop();
     const ROUTE* GetRote() const { return &m_Route; }
+    const std::list<std::unique_ptr<Connection>>& getConnections() { return m_connections; }
 
 private:
     static DWORD m_ID;

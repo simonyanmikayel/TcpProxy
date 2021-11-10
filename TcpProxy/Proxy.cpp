@@ -39,6 +39,47 @@ boolean Proxy::Start(const std::vector<ROUTE>& routes)
 	return true;
 }
 
+// return true if there is an open connection
+bool Proxy::StopRandomly(DWORD timeout)
+{
+	if (!Running())
+		return false;
+	bool ret = false;
+	for (auto& r : m_Routers)
+	{
+		if (r->GetRote()->closeRandomly)
+		{
+			for (auto& p : r->getConnections())
+			{
+				if (p->closeTimeout == INFINITE)
+				{
+					//init random value
+					srand((unsigned)time(NULL));
+					DWORD minVal = 10000;
+					DWORD maxVal = 30000;
+					//p->closeTimeout = (DWORD)(((double)rand() / (double)RAND_MAX) * (maxVal - minVal)) + minVal;
+					p->closeTimeout = (rand() % maxVal) + minVal;     // the range minVal to maxVal
+					STDLOG("ID: %d closeTimeout: %d", p->ID(), p->closeTimeout);
+				}
+				if (p->IsOpen())
+				{
+					ret = true;
+					if (p->closeTimeout > timeout)
+					{
+						p->closeTimeout -= timeout;
+					}
+					else
+					{
+						p->close(IO_ACTION::PROXY_STOP);
+						::PostMessage(hwndMain, WM_UPDATE_TREE, 0, -1);
+					}
+				}
+			}
+		}
+	}
+	return ret;
+}
+
 void Proxy::Stop()
 {
 	STDLOG("");
@@ -137,6 +178,11 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 					else if (IO_ACTION::CONNECT == action)
 					{
 						pConnection->onConnect();
+						if (pConnection->IsConnectSocket(pSocket) && pRouter->GetRote()->closeRandomly)
+						{
+						    ::PostMessage(hwndMain, WM_CLOSE_RANDOMLY, 0, 0);
+						}
+
 						if (!pRouter->DoRecv(&pConnection->m_AcceptSocket, pProxy->m_hIoCompPort) ||
 							!pRouter->DoRecv(&pConnection->m_ConnectSocket, pProxy->m_hIoCompPort))
 							pConnection->close(IO_ACTION::RECV);
@@ -145,9 +191,36 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 					{
 						gArchive.addRecv(pSocket, pSocket->buf, entry.dwNumberOfBytesTransferred);
 						pConnection->onRecv();
-						Socket* pSendSocket = pConnection->GetPear(pSocket);
-						if (!pRouter->DoSend(pSendSocket, entry.dwNumberOfBytesTransferred, pSocket->buf, pProxy->m_hIoCompPort))
-							pConnection->close(IO_ACTION::RECV);
+						if (pConnection->IsConnectSocket(pSocket) && pRouter->GetRote()->closeWhenDataReceived)
+						{
+							STDLOG("pSocket: %s(%d) closeWhenDataReceived",
+								SocketTypeNmae(pConnection->SocketType(pSocket)), pSocket->m_s);
+							pConnection->close(IO_ACTION::PROXY_STOP);
+						}
+						else if (pConnection->IsConnectSocket(pSocket) && pRouter->GetRote()->purgeReceivedPakage)
+						{
+							STDLOG("pSocket: %s(%d) purgeReceivedPakage",
+								SocketTypeNmae(pConnection->SocketType(pSocket)), pSocket->m_s);
+							// DO nothing
+						}
+						else
+						{
+							Socket* pSendSocket = pConnection->GetPear(pSocket);
+							if (pConnection->IsConnectSocket(pSocket) && pRouter->GetRote()->sendHalfOfData && entry.dwNumberOfBytesTransferred > 1)
+							{
+								entry.dwNumberOfBytesTransferred /= 2;
+								STDLOG("pSocket: %s(%d) sendHalfOfData",
+									SocketTypeNmae(pConnection->SocketType(pSocket)), pSocket->m_s);
+								if (!pRouter->DoSend(pSendSocket, entry.dwNumberOfBytesTransferred, pSocket->buf, pProxy->m_hIoCompPort))
+									pConnection->close(IO_ACTION::RECV);
+								pConnection->close(IO_ACTION::PROXY_STOP);
+							}
+							else
+							{
+								if (!pRouter->DoSend(pSendSocket, entry.dwNumberOfBytesTransferred, pSocket->buf, pProxy->m_hIoCompPort))
+									pConnection->close(IO_ACTION::RECV);
+							}
+						}
 					}
 					else if (IO_ACTION::SEND == action)
 					{

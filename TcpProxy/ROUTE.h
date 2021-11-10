@@ -7,6 +7,11 @@ struct ROUTE
     u_short     local_port = 0;
     u_short     remote_port = 0;
     u_short     enabled = 0;
+    u_short     closeWhenDataReceived = 0;
+    u_short     purgeReceivedPakage = 0;
+    u_short     sendHalfOfData = 0;
+    u_short     closeRandomly = 0;
+
     boolean     selected = 0;
     std::string remote_addr;
     boolean IsValid() { return local_port && remote_port && remote_addr.size(); }
@@ -34,7 +39,15 @@ struct ROUTE
         s << remote_addr << std::endl;
     }
     boolean operator == (const ROUTE& r) {
-        return local_port == r.local_port && remote_port == r.remote_port && remote_addr == r.remote_addr && enabled == r.enabled;
+        return 
+            local_port == r.local_port && 
+            remote_port == r.remote_port && 
+            remote_addr == r.remote_addr && 
+            enabled == r.enabled &&
+            purgeReceivedPakage == r.purgeReceivedPakage &&
+            sendHalfOfData == r.sendHalfOfData &&
+            closeRandomly == r.closeRandomly &&
+            closeWhenDataReceived == r.closeWhenDataReceived;
     }
 
 };

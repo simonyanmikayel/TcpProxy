@@ -34,6 +34,7 @@ struct LOG_NODE
     LOG_NODE* nextChank;
     LOG_TYPE data_type;
     DWORD childCount;
+    DWORD nn;
 
     ROOT_NODE* asRoot() { return data_type == LOG_TYPE::ROOT ? (ROOT_NODE*)this : nullptr; }
     ROUTER_NODE* asRouter() { return data_type == LOG_TYPE::ROUTER ? (ROUTER_NODE*)this : nullptr; }
@@ -64,12 +65,13 @@ struct LOG_NODE
         pNode->prevSibling = lastChild;
         pNode->parent = this;
         lastChild = pNode;
-        LOG_NODE* p = pNode->parent;
+        LOG_NODE* p = this;
         while (p)
         {
             p->childCount++;
             p = p->parent;
         }
+        pNode->nn = this->childCount;
     }
 
     void CalcLines();

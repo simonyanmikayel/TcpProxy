@@ -21,6 +21,10 @@ public:
     CEdit   m_edtLocalPort;
     CEdit   m_edtRemotePort;
     CEdit   m_edtRemoteAddr;
+    CButton m_closeWhenDataReceived;
+    CButton m_purgeReceivedPakage;
+    CButton m_sendHalfOfData;
+    CButton m_closeRandomly;
 
     ROUTE m_route;
 

@@ -33,6 +33,7 @@ public:
         MESSAGE_HANDLER(WM_TIMER, OnTimer)
         MESSAGE_HANDLER(WM_SHOW_NGS, onShowMsg)
         MESSAGE_HANDLER(WM_UPDATE_TREE, onUpdateTree)
+        MESSAGE_HANDLER(WM_CLOSE_RANDOMLY, onCloseRandomly)
         COMMAND_ID_HANDLER(ID_APP_EXIT, OnFileExit)
         COMMAND_ID_HANDLER(ID_APP_ABOUT, OnAppAbout)
         COMMAND_ID_HANDLER(ID_VIEW_STARTPROXY, OnStartProxy)
@@ -59,6 +60,7 @@ public:
     LRESULT OnClearLog(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT onShowMsg(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
     LRESULT onUpdateTree(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+    LRESULT onCloseRandomly(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 
     void UpdateStatusBar();
     void SetTitle();

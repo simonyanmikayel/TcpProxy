@@ -97,6 +97,10 @@ LRESULT DlgRouteTable::OnCmdButtonEdit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND 
         r.remote_port = atoi(str);
         m_RouteList.GetItemText(nItem, 3, str);
         r.remote_addr = str;
+        r.closeWhenDataReceived = routes[nItem].closeWhenDataReceived;
+        r.purgeReceivedPakage = routes[nItem].purgeReceivedPakage;
+        r.sendHalfOfData = routes[nItem].sendHalfOfData;
+        r.closeRandomly = routes[nItem].closeRandomly;
 
         DlgRoute dlg(&r);
         if (IDOK == dlg.DoModal())

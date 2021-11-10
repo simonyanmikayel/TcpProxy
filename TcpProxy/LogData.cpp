@@ -87,6 +87,11 @@ CHAR* LOG_NODE::getTreeText(int* cBuf)
 #ifdef _DEBUG
     //cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("[%d %d %d]"), GetExpandCount(), line, lastChild ? lastChild->index : 0);
 #endif
+    if (nn)
+    {
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "%d - ", nn);
+    }
+
     if (asRoot())
     {
         cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("   "));

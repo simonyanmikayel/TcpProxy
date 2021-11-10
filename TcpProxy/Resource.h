@@ -36,13 +36,17 @@
 #define IDC_BUTTON_EDIT                 1002
 #define IDC_BUTTON_DELETE               1003
 #define IDC_EDIT_NAME                   1004
-#define IDC_BUTTON_DELETE2              1004
 #define IDC_BUTTON_EXPORT               1004
 #define IDC_EDIT_LOCAL_PORT             1005
 #define IDC_BUTTON_IMPORT               1005
 #define IDC_EDIT_REMOTE_PORT            1006
 #define IDC_BTN_FONT                    1007
 #define IDC_EDIT_REMOTE_ADDR            1007
+#define IDC_CHECK_CLOSE_ON_RECEIVE      1009
+#define IDC_CHECK_PURGE_RECV            1010
+#define IDC_CHECK_SEND_HALF             1011
+#define IDC_CHECK_SEND_HALF2            1012
+#define IDC_CHECK_CLOSE_RANDOMLY        1012
 #define ID_TREE_EXPAND_ALL              32771
 #define ID_TREE_COLLAPSE_ALL            32772
 
@@ -53,7 +57,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        150
 #define _APS_NEXT_COMMAND_VALUE         32773
-#define _APS_NEXT_CONTROL_VALUE         1009
+#define _APS_NEXT_CONTROL_VALUE         1010
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

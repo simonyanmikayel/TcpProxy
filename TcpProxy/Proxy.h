@@ -9,6 +9,7 @@ public:
     ~Proxy();
     boolean Start(const std::vector<ROUTE>& routes);
     void Stop();
+    bool StopRandomly(DWORD timeout);
     void AddRoute(const ROUTE& r);
     void ShowRoutes();
     boolean Running() { return m_hIoCompPort != NULL; }

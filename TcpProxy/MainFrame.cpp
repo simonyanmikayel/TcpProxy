@@ -10,6 +10,8 @@ HWND  hwndMain;
 CMainFrame* gMainFrame;
 #define	TIMER_DATA_REFRESH 43
 #define	TIMER_DATA_REFRESH_INTERVAL	500
+#define	TIMER_CLOSE_RANDOMLY 44
+#define	TIMER_CLOSE_RANDOMLY_INTERVAL	10
 
 CMainFrame::CMainFrame()
 {
@@ -189,12 +191,24 @@ LRESULT CMainFrame::onShowMsg(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, B
     return true;
 }
 
+LRESULT CMainFrame::onCloseRandomly(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
+{
+    KillTimer(TIMER_CLOSE_RANDOMLY);
+    SetTimer(TIMER_CLOSE_RANDOMLY, TIMER_CLOSE_RANDOMLY_INTERVAL);
+
+    return true;
+}
+
 LRESULT CMainFrame::onUpdateTree(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
 {
     int nFirst = (int)wParam;
     int nLast = (int)lParam;
-    if (nFirst > 0 && nLast > 0)
-        m_view.m_wndTreeView.RedrawItems(nFirst, nLast);
+    if (nFirst < 0)
+        nFirst = 0;
+    if (nLast < 0)
+        nLast = m_view.m_wndTreeView.GetItemCount();
+
+    m_view.m_wndTreeView.RedrawItems(nFirst, nLast);
     return true;
 }
 
@@ -206,6 +220,13 @@ LRESULT CMainFrame::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOO
         {
             RefreshLog();
         }
+    }
+    else if (wParam == TIMER_CLOSE_RANDOMLY)
+    {
+        gArchive.lock();
+        if (!gProxy.StopRandomly(TIMER_CLOSE_RANDOMLY_INTERVAL))
+            KillTimer(TIMER_CLOSE_RANDOMLY);
+        gArchive.unlock();
     }
     return 0;
 
@@ -230,6 +251,7 @@ void CMainFrame::StopLogging()
 {
     gProxy.Stop();
     KillTimer(TIMER_DATA_REFRESH);
+    KillTimer(TIMER_CLOSE_RANDOMLY);
 }
 
 void CMainFrame::ClearLog()

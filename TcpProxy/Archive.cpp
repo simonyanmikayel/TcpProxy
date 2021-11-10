@@ -148,7 +148,7 @@ RECV_NODE* Archive::addRecv(const Socket* pSocket, char* pData, DWORD cData)
     pNode->cData = cData;
     memcpy(pNode->data(), pData, cData);
     pNode->data_type = LOG_TYPE::RECV;
-    pNode->isLocal = (pConnection->SocketType(pSocket) == SOCKET_TYPE::ACCEPT);
+    pNode->isLocal = pConnection->IsAccepSocket(pSocket);
     if (pNode->isLocal)
         pConnNode->cSend += cData;
     else

@@ -44,6 +44,11 @@ void CLogDataView::OnSelectionChanged(LOG_NODE* pNode)
     {        
         cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "%s\r\nsent %d bytes\r\nreceived %d bytes\r\n", p->peername, p->cSend, p->cRecvd);
         cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "created at %d:%d:%d.%d\r\n", p->initTime.wHour, p->initTime.wMinute, p->initTime.wSecond, p->initTime.wMilliseconds);
+        if (p->opened)
+        {
+            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "connected at %d:%d:%d.%d\r\n",
+                p->connectTime.wHour, p->connectTime.wMinute, p->connectTime.wSecond, p->connectTime.wMilliseconds);
+        }        
         if (p->closed)
         {
             char* dueTo = "?";
@@ -53,7 +58,7 @@ void CLogDataView::OnSelectionChanged(LOG_NODE* pNode)
                 dueTo = "server rejeted connection";
             else if (p->action == IO_ACTION::RECV || p->action == IO_ACTION::SEND)
                 dueTo = "connection closed";
-            else if (p->action == IO_ACTION::RECV || p->action == IO_ACTION::PROXY_STOP)
+            else if (p->action == IO_ACTION::PROXY_STOP)
                 dueTo = "proxy stopped";
             cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "clased at %d:%d:%d.%d\r\n%s\r\n",
                 p->closeTime.wHour, p->closeTime.wMinute, p->closeTime.wSecond, p->closeTime.wMilliseconds, dueTo);
