@@ -104,7 +104,7 @@ CHAR* LOG_NODE::getTreeText(int* cBuf)
     else if (CONN_NODE* p = asConn())
     {
         cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("%s (sent %d bytes, received %d bytes) "), p->peername, p->cSend, p->cRecvd);
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(created at %d:%d:%d.%d) "), p->initTime.wHour, p->initTime.wMinute, p->initTime.wSecond,p->initTime.wMilliseconds);
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(created at %02d:%02d:%02d.%03d) "), p->initTime.wHour, p->initTime.wMinute, p->initTime.wSecond,p->initTime.wMilliseconds);
         if (p->closed)
         {
             char* dueTo = "?";
@@ -116,7 +116,7 @@ CHAR* LOG_NODE::getTreeText(int* cBuf)
                 dueTo = "connection closed";
             else if (p->action == IO_ACTION::RECV || p->action == IO_ACTION::PROXY_STOP)
                 dueTo = "proxy stopped";
-            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(clased at %d:%d:%d.%d) (%s) "),
+            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(clased at %02d:%02d:%02d.%03d) (%s) "),
                 p->closeTime.wHour, p->closeTime.wMinute, p->closeTime.wSecond, p->closeTime.wMilliseconds, dueTo);
         }
     }
@@ -124,7 +124,7 @@ CHAR* LOG_NODE::getTreeText(int* cBuf)
     {        
         cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("%s %d bytes "),
             p->isLocal ? "-> sent " : "<- received ", p->cData);
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(at %d:%d:%d.%d) "),
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(at %02d:%02d:%02d.%03d) "),
             p->time.wHour, p->time.wMinute, p->time.wSecond, p->time.wMilliseconds);
     }
     else

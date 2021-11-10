@@ -43,10 +43,10 @@ void CLogDataView::OnSelectionChanged(LOG_NODE* pNode)
     else if (CONN_NODE* p = pNode->asConn())
     {        
         cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "%s\r\nsent %d bytes\r\nreceived %d bytes\r\n", p->peername, p->cSend, p->cRecvd);
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "created at %d:%d:%d.%d\r\n", p->initTime.wHour, p->initTime.wMinute, p->initTime.wSecond, p->initTime.wMilliseconds);
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "created at %02d:%02d:%02d.%03d\r\n", p->initTime.wHour, p->initTime.wMinute, p->initTime.wSecond, p->initTime.wMilliseconds);
         if (p->opened)
         {
-            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "connected at %d:%d:%d.%d\r\n",
+            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "connected at %02d:%02d:%02d.%03d\r\n",
                 p->connectTime.wHour, p->connectTime.wMinute, p->connectTime.wSecond, p->connectTime.wMilliseconds);
         }        
         if (p->closed)
@@ -60,7 +60,7 @@ void CLogDataView::OnSelectionChanged(LOG_NODE* pNode)
                 dueTo = "connection closed";
             else if (p->action == IO_ACTION::PROXY_STOP)
                 dueTo = "proxy stopped";
-            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "clased at %d:%d:%d.%d\r\n%s\r\n",
+            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "clased at %02d:%02d:%02d.%03d\r\n%s\r\n",
                 p->closeTime.wHour, p->closeTime.wMinute, p->closeTime.wSecond, p->closeTime.wMilliseconds, dueTo);
         }
     }
@@ -68,7 +68,7 @@ void CLogDataView::OnSelectionChanged(LOG_NODE* pNode)
     {
         cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "%s %d bytes ",
             p->isLocal ? "-> sent " : "<- received ", p->cData);
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(at %d:%d:%d.%d)\r\n\r\n"),
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(at %02d:%02d:%02d.%03d)\r\n\r\n"),
             p->time.wHour, p->time.wMinute, p->time.wSecond, p->time.wMilliseconds);
         cb += Helpers::HexDump((BYTE*)(pBuf + cb), cMaxBuf - cb, (BYTE*)p->data(), p->cData, 16);
     }
