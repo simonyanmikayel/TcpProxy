@@ -7,6 +7,14 @@ struct Socket;
 struct Connection;
 
 enum class SOCKET_TYPE { ACCEPT, CONNECT };
+enum class ERROR_SOURCE { CLIENT, SERVER, PROXY };
+inline char* ErrorSourceNmae(ERROR_SOURCE i) {
+    char* r = "?";
+    if (i == ERROR_SOURCE::CLIENT) r = "CLIENT";
+    else if (i == ERROR_SOURCE::SERVER) r = "SERVER";
+    else if (i == ERROR_SOURCE::PROXY) r = "PROXY";
+    return r;
+}
 inline char* SocketTypeNmae(SOCKET_TYPE i) {
     char* r = "?";
     if (i == SOCKET_TYPE::ACCEPT) r = "LOCAL";
@@ -15,13 +23,13 @@ inline char* SocketTypeNmae(SOCKET_TYPE i) {
 }
 
 enum class IO_ACTION { NONE, ACCEPT, CONNECT, RECV, SEND, PROXY_STOP };
-inline char* IoTypeNmae(IO_ACTION i) { 
+inline char* IoActionNmae(IO_ACTION i) {
     char* r = "?";  
-    if (i == IO_ACTION::NONE) r = "IO_ACTION::NONE"; 
-    else if (i == IO_ACTION::ACCEPT) r = "IO_ACTION::ACCEPT";
-    else if (i == IO_ACTION::CONNECT) r = "IO_ACTION::CONNECT";
-    else if (i == IO_ACTION::RECV) r = "IO_ACTION::RECV";
-    else if (i == IO_ACTION::SEND) r = "IO_ACTION::SEND";
+    if (i == IO_ACTION::NONE) r = "NONE"; 
+    else if (i == IO_ACTION::ACCEPT) r = "ACCEPT";
+    else if (i == IO_ACTION::CONNECT) r = "CONNECT";
+    else if (i == IO_ACTION::RECV) r = "RECV";
+    else if (i == IO_ACTION::SEND) r = "SEND";
     return r; 
 }
 
@@ -70,8 +78,7 @@ struct Connection
         STDLOG(""); GetLocalTime(&initTime); 
     }
     ~Connection() { STDLOG(""); m_AcceptSocket.CloseSocket(); m_ConnectSocket.CloseSocket(); }
-    void close(IO_ACTION action) { onClose(action); };
-    void onClose(IO_ACTION action);
+    void Close(IO_ACTION action, ERROR_SOURCE error_source, char* file, int line);
     void onConnect();
     void onRecv();
     SOCKET_TYPE SocketType(const Socket* pSocket) const { return pSocket == &m_AcceptSocket ? SOCKET_TYPE::ACCEPT : SOCKET_TYPE::CONNECT; }
@@ -85,6 +92,7 @@ struct Connection
     Socket m_ConnectSocket;
     ULONG_PTR m_err = 0;
     IO_ACTION m_io_action = IO_ACTION::NONE;
+    ERROR_SOURCE m_error_source = ERROR_SOURCE::PROXY;
     SYSTEMTIME initTime = { 0 };
     SYSTEMTIME connectTime = {0};
     SYSTEMTIME closeTime = { 0 };

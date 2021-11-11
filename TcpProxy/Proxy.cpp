@@ -70,7 +70,7 @@ bool Proxy::StopRandomly(DWORD timeout)
 					}
 					else
 					{
-						p->close(IO_ACTION::PROXY_STOP);
+						p->Close(IO_ACTION::PROXY_STOP, ERROR_SOURCE::PROXY, __FUNCTION__, __LINE__);
 						::PostMessage(hwndMain, WM_UPDATE_TREE, 0, -1);
 					}
 				}
@@ -155,13 +155,13 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 
 				STDLOG("pSocket: %s(%d) action=%s bytes=%d err=%X", 
 					SocketTypeNmae(pConnection->SocketType(pSocket)), pSocket->m_s,
-					IoTypeNmae(action),
+					IoActionNmae(action),
 					entry.dwNumberOfBytesTransferred, err);
 
 				if (IO_ACTION::ACCEPT == action)
 				{
 					if (!pRouter->DoAccept(pProxy->m_hIoCompPort)) //loop of accept
-						pConnection->close(IO_ACTION::ACCEPT);
+						pConnection->Close(IO_ACTION::ACCEPT, ERROR_SOURCE::CLIENT, __FUNCTION__, __LINE__);
 				}
 				if (err == 0 && entry.dwNumberOfBytesTransferred == 0 && (IO_ACTION::RECV == action || IO_ACTION::SEND == action))
 				{
@@ -173,7 +173,7 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 					{
 						gArchive.addConnection(pConnection);
 						if (!pRouter->DoConnect(pConnection, pProxy->m_hIoCompPort))
-							pConnection->close(IO_ACTION::CONNECT);
+							pConnection->Close(IO_ACTION::CONNECT, ERROR_SOURCE::SERVER, __FUNCTION__, __LINE__);
 					}
 					else if (IO_ACTION::CONNECT == action)
 					{
@@ -183,9 +183,10 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 						    ::PostMessage(hwndMain, WM_CLOSE_RANDOMLY, 0, 0);
 						}
 
-						if (!pRouter->DoRecv(&pConnection->m_AcceptSocket, pProxy->m_hIoCompPort) ||
-							!pRouter->DoRecv(&pConnection->m_ConnectSocket, pProxy->m_hIoCompPort))
-							pConnection->close(IO_ACTION::RECV);
+						if (!pRouter->DoRecv(&pConnection->m_AcceptSocket, pProxy->m_hIoCompPort))
+							pConnection->Close(IO_ACTION::RECV, ERROR_SOURCE::CLIENT, __FUNCTION__, __LINE__);
+						if (!pRouter->DoRecv(&pConnection->m_ConnectSocket, pProxy->m_hIoCompPort))
+							pConnection->Close(IO_ACTION::RECV, ERROR_SOURCE::SERVER, __FUNCTION__, __LINE__);
 					}
 					else if (IO_ACTION::RECV == action)
 					{
@@ -195,7 +196,7 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 						{
 							STDLOG("pSocket: %s(%d) closeWhenDataReceived",
 								SocketTypeNmae(pConnection->SocketType(pSocket)), pSocket->m_s);
-							pConnection->close(IO_ACTION::PROXY_STOP);
+							pConnection->Close(IO_ACTION::PROXY_STOP, ERROR_SOURCE::PROXY, __FUNCTION__, __LINE__);
 						}
 						else if (pConnection->IsConnectSocket(pSocket) && pRouter->GetRote()->purgeReceivedPakage)
 						{
@@ -212,13 +213,14 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 								STDLOG("pSocket: %s(%d) sendHalfOfData",
 									SocketTypeNmae(pConnection->SocketType(pSocket)), pSocket->m_s);
 								if (!pRouter->DoSend(pSendSocket, entry.dwNumberOfBytesTransferred, pSocket->buf, pProxy->m_hIoCompPort))
-									pConnection->close(IO_ACTION::RECV);
-								pConnection->close(IO_ACTION::PROXY_STOP);
+									pConnection->Close(IO_ACTION::SEND, pConnection->IsAccepSocket(pSendSocket) ? ERROR_SOURCE::CLIENT : ERROR_SOURCE::SERVER, __FUNCTION__, __LINE__);
+								else
+									pConnection->Close(IO_ACTION::PROXY_STOP, ERROR_SOURCE::PROXY, __FUNCTION__, __LINE__);
 							}
 							else
 							{
 								if (!pRouter->DoSend(pSendSocket, entry.dwNumberOfBytesTransferred, pSocket->buf, pProxy->m_hIoCompPort))
-									pConnection->close(IO_ACTION::RECV);
+									pConnection->Close(IO_ACTION::RECV, pConnection->IsAccepSocket(pSendSocket) ? ERROR_SOURCE::CLIENT : ERROR_SOURCE::SERVER, __FUNCTION__, __LINE__);
 							}
 						}
 					}
@@ -226,13 +228,13 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 					{
 						Socket* pRecvSocket = pConnection->GetPear(pSocket);
 						if (!pRouter->DoRecv(pRecvSocket, pProxy->m_hIoCompPort)) // recive loop
-							pConnection->close(IO_ACTION::SEND);
+							pConnection->Close(IO_ACTION::RECV, pConnection->IsAccepSocket(pRecvSocket) ? ERROR_SOURCE::CLIENT : ERROR_SOURCE::SERVER, __FUNCTION__, __LINE__);
 					}
 				}
 				else
 				{
 					if (err != STATUS_PENDING)
-						pConnection->close(action);
+						pConnection->Close(action, pConnection->IsAccepSocket(pSocket) ? ERROR_SOURCE::CLIENT : ERROR_SOURCE::SERVER, __FUNCTION__, __LINE__);
 				}
 			}
 		}

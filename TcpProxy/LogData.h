@@ -66,11 +66,7 @@ struct LOG_NODE
         pNode->parent = this;
         lastChild = pNode;
         LOG_NODE* p = this;
-        while (p)
-        {
-            p->childCount++;
-            p = p->parent;
-        }
+        childCount++;
         pNode->nn = this->childCount;
     }
 
@@ -107,9 +103,11 @@ struct CONN_NODE : LOG_NODE
     BYTE  closed;
     char peername[32];
     IO_ACTION action;
+    ERROR_SOURCE error_source;
     SYSTEMTIME initTime;
     SYSTEMTIME connectTime;
     SYSTEMTIME closeTime;
+    const char* closeReason();
 };
 
 struct RECV_NODE : LOG_NODE

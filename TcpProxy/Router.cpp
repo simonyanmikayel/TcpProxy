@@ -56,13 +56,14 @@ void Connection::onRecv()
 	}
 }
 
-void Connection::onClose(IO_ACTION action)
+void Connection::Close(IO_ACTION action, ERROR_SOURCE error_source, char* file, int line)
 { 
-	STDLOG(""); 
 	if (!closed)
 	{
+		STDLOG("Connection closed from %s:%d: action=%s, err_src=%s", file, line, IoActionNmae(action), ErrorSourceNmae(error_source));
 		closed = true;
 		m_io_action = action;
+		m_error_source = error_source;
 		m_AcceptSocket.CloseSocket();
 		m_ConnectSocket.CloseSocket();
 		GetLocalTime(&closeTime);
@@ -71,6 +72,7 @@ void Connection::onClose(IO_ACTION action)
 		{
 			pNode->closed = 1;
 			pNode->action = action;
+			pNode->error_source = error_source;
 			pNode->closeTime = closeTime;
 			if (pNode->posInTree && pNode->parent && pNode->parent->expanded)
 				::PostMessage(hwndMain, WM_UPDATE_TREE, (WPARAM)pNode->posInTree, (LPARAM)pNode->posInTree);
@@ -287,6 +289,6 @@ void Router::Stop()
 	closesocket(m_ListenSocket);
 	for (auto& p : m_connections)
 	{
-		p->close(IO_ACTION::PROXY_STOP);
+		p->Close(IO_ACTION::PROXY_STOP, ERROR_SOURCE::PROXY, __FUNCTION__, __LINE__);
 	}
 }

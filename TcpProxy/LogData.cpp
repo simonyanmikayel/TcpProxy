@@ -78,6 +78,39 @@ int LOG_NODE::getTreeImage()
     }
 }
 
+const char* CONN_NODE::closeReason()
+{
+    const char* dueTo = "?";
+    if (closed) {
+        if (action == IO_ACTION::ACCEPT) {
+            dueTo = "Client closed connection.";
+        }
+        else if (action == IO_ACTION::CONNECT) {
+            dueTo = "Server rejeted connection.";
+        }
+        else if (action == IO_ACTION::RECV) {
+            if (error_source == ERROR_SOURCE::CLIENT)
+                dueTo = "Recieve failed. Connection closed by client.";
+            else if (error_source == ERROR_SOURCE::SERVER)
+                dueTo = "Recieve failed. Connection closed by server.";
+            else
+                dueTo = "Recieve failed. Connection closed by proxy.";
+        }
+        else if (action == IO_ACTION::SEND) {
+            if (error_source == ERROR_SOURCE::CLIENT)
+                dueTo = "Send failed. Connection closed by client.";
+            else if (error_source == ERROR_SOURCE::SERVER)
+                dueTo = "Send failed. Connection closed by server.";
+            else
+                dueTo = "Send failed. Connection closed by proxy.";
+        }
+        else if (action == IO_ACTION::PROXY_STOP) {
+            dueTo = "proxy stopped.";
+        }
+    }
+    return dueTo;
+}
+
 CHAR* LOG_NODE::getTreeText(int* cBuf)
 {
     const int cMaxBuf = 1024;
@@ -103,19 +136,11 @@ CHAR* LOG_NODE::getTreeText(int* cBuf)
     }
     else if (CONN_NODE* p = asConn())
     {
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("%s (sent %d bytes, received %d bytes) "), p->peername, p->cSend, p->cRecvd);
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("%s (Total %d packages, sent %d bytes, received %d bytes) "), p->peername, p->childCount, p->cSend, p->cRecvd);
         cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(created at %02d:%02d:%02d.%03d) "), p->initTime.wHour, p->initTime.wMinute, p->initTime.wSecond,p->initTime.wMilliseconds);
         if (p->closed)
         {
-            char* dueTo = "?";
-            if (p->action == IO_ACTION::ACCEPT)
-                dueTo = "client closed connection";
-            else if (p->action == IO_ACTION::CONNECT)
-                dueTo = "server rejeted connection";
-            else if (p->action == IO_ACTION::RECV || p->action == IO_ACTION::SEND)
-                dueTo = "connection closed";
-            else if (p->action == IO_ACTION::RECV || p->action == IO_ACTION::PROXY_STOP)
-                dueTo = "proxy stopped";
+            const char* dueTo = p->closeReason();
             cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(clased at %02d:%02d:%02d.%03d) (%s) "),
                 p->closeTime.wHour, p->closeTime.wMinute, p->closeTime.wSecond, p->closeTime.wMilliseconds, dueTo);
         }

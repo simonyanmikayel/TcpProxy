@@ -51,23 +51,15 @@ void CLogDataView::OnSelectionChanged(LOG_NODE* pNode)
         }        
         if (p->closed)
         {
-            char* dueTo = "?";
-            if (p->action == IO_ACTION::ACCEPT)
-                dueTo = "client closed connection";
-            else if (p->action == IO_ACTION::CONNECT)
-                dueTo = "server rejeted connection";
-            else if (p->action == IO_ACTION::RECV || p->action == IO_ACTION::SEND)
-                dueTo = "connection closed";
-            else if (p->action == IO_ACTION::PROXY_STOP)
-                dueTo = "proxy stopped";
-            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "clased at %02d:%02d:%02d.%03d\r\n%s\r\n",
+            const char* dueTo = p->closeReason();
+            cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "closed at %02d:%02d:%02d.%03d\r\n%s\r\n",
                 p->closeTime.wHour, p->closeTime.wMinute, p->closeTime.wSecond, p->closeTime.wMilliseconds, dueTo);
         }
     }
     else if (RECV_NODE* p = pNode->asRecv())
     {
         cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "%s %d bytes ",
-            p->isLocal ? "-> sent " : "<- received ", p->cData);
+            p->isLocal ? "-> send " : "<- received ", p->cData);
         cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(at %02d:%02d:%02d.%03d)\r\n\r\n"),
             p->time.wHour, p->time.wMinute, p->time.wSecond, p->time.wMilliseconds);
         cb += Helpers::HexDump((BYTE*)(pBuf + cb), cMaxBuf - cb, (BYTE*)p->data(), p->cData, 16);
