@@ -3,11 +3,13 @@
 #include "Buffer.h"
 #include "Router.h"
 
-enum class LOG_TYPE { ROOT, ROUTER, CONN, RECV};
+enum class LOG_TYPE { ROOT, ROUTER, CONN, EXCHANGE};
 struct ROOT_NODE;
 struct ROUTER_NODE;
 struct CONN_NODE;
-struct RECV_NODE;
+struct EXCHANGE_NODE;
+
+//#pragma pack(push,1)
 
 struct LOG_NODE
 {
@@ -24,7 +26,6 @@ struct LOG_NODE
         WORD hasNodeBox : 1;
         WORD pathExpanded : 1;
     };
-    BYTE bookmark;
     BYTE nextChankCounter;
     int cExpanded;
     int posInTree;
@@ -39,12 +40,13 @@ struct LOG_NODE
     ROOT_NODE* asRoot() { return data_type == LOG_TYPE::ROOT ? (ROOT_NODE*)this : nullptr; }
     ROUTER_NODE* asRouter() { return data_type == LOG_TYPE::ROUTER ? (ROUTER_NODE*)this : nullptr; }
     CONN_NODE* asConn() { return data_type == LOG_TYPE::CONN ? (CONN_NODE*)this : nullptr; }
-    RECV_NODE* asRecv() { return data_type == LOG_TYPE::RECV ? (RECV_NODE*)this : nullptr; }
+    EXCHANGE_NODE* asExchange() { return data_type == LOG_TYPE::EXCHANGE ? (EXCHANGE_NODE*)this : nullptr; }
+    DWORD nodeSize();
 
-    //bool isRoot() { return data_type == LOG_TYPE::ROOT; }
-    //bool isRouter() { return data_type == LOG_TYPE::ROUTER; }
-    //bool isConn() { return data_type == LOG_TYPE::CONN; }
-    //bool isRecv() { return data_type == LOG_TYPE::RECV; }
+    bool isRoot() { return data_type == LOG_TYPE::ROOT; }
+    bool isRouter() { return data_type == LOG_TYPE::ROUTER; }
+    bool isConn() { return data_type == LOG_TYPE::CONN; }
+    bool isExchange() { return data_type == LOG_TYPE::EXCHANGE; }
 
     void add_child(LOG_NODE* pNode)
     {
@@ -81,6 +83,7 @@ struct LOG_NODE
 
 struct ROOT_NODE : LOG_NODE
 {
+    DWORD size() { return sizeof(*this); }
 };
 
 struct ROUTER_NODE : LOG_NODE
@@ -92,6 +95,7 @@ struct ROUTER_NODE : LOG_NODE
     WORD cb_remote_addr;
     char* name() { return (char*)(this) + sizeof(*this); }
     char* remote_addr() { return name() + cb_name + 1; }
+    DWORD size() { return sizeof(*this) + cb_name + 1 + cb_remote_addr + 1; }
 };
 
 struct CONN_NODE : LOG_NODE
@@ -108,12 +112,16 @@ struct CONN_NODE : LOG_NODE
     SYSTEMTIME connectTime;
     SYSTEMTIME closeTime;
     const char* closeReason();
+    DWORD size() { return sizeof(*this); }
 };
 
-struct RECV_NODE : LOG_NODE
+struct EXCHANGE_NODE : LOG_NODE
 {
     SYSTEMTIME time;
     boolean isLocal;
     DWORD cData;
     char* data() { return (char*)(this) + sizeof(*this); }
+    DWORD size() { return sizeof(*this) + cData; }
 };
+
+//#pragma pack(pop)

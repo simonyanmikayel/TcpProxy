@@ -30,6 +30,7 @@
 #define ID_VIEW_ROUTE_TABLSE            144
 #define IDD_ROUTE_TABLE                 145
 #define IDB_TTF_BMP                     146
+#define IDD_PROGRESS                    150
 #define IDC_FONT_NAME                   1000
 #define IDC_ROUTE_LIST                  1000
 #define IDC_BUTTON_ADD                  1001
@@ -44,20 +45,24 @@
 #define IDC_EDIT_REMOTE_ADDR            1007
 #define IDC_CHECK_CLOSE_ON_RECEIVE      1009
 #define IDC_CHECK_PURGE_RECV            1010
+#define IDC_STATIC_INFO                 1010
 #define IDC_CHECK_SEND_HALF             1011
+#define IDC_PROGRESS                    1011
 #define IDC_CHECK_SEND_HALF2            1012
 #define IDC_CHECK_CLOSE_RANDOMLY        1012
 #define ID_TREE_EXPAND_ALL              32771
 #define ID_TREE_COLLAPSE_ALL            32772
+#define ID_FILE_EXPORTLOG               32773
+#define ID_FILE_IMPORTLOG               32774
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        150
-#define _APS_NEXT_COMMAND_VALUE         32773
-#define _APS_NEXT_CONTROL_VALUE         1010
+#define _APS_NEXT_RESOURCE_VALUE        151
+#define _APS_NEXT_COMMAND_VALUE         32775
+#define _APS_NEXT_CONTROL_VALUE         1012
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

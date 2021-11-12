@@ -171,9 +171,11 @@
     <ClInclude Include="AboutDlg.h" />
     <ClInclude Include="Archive.h" />
     <ClInclude Include="Buffer.h" />
+    <ClInclude Include="DlgProgress.h" />
     <ClInclude Include="DlgRoute.h" />
     <ClInclude Include="DlgRouteTable.h" />
     <ClInclude Include="DlgSettings.h" />
+    <ClInclude Include="FileMap.h" />
     <ClInclude Include="FontPreviewCombo.h" />
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="LogData.h" />
@@ -187,11 +189,13 @@
     <ClInclude Include="Router.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="WorkerThread.h" />
     <ClInclude Include="wsock.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AboutDlg.cpp" />
     <ClCompile Include="Archive.cpp" />
+    <ClCompile Include="DlgProgress.cpp" />
     <ClCompile Include="DlgRoute.cpp" />
     <ClCompile Include="DlgRouteTable.cpp" />
     <ClCompile Include="DlgSettings.cpp" />
@@ -213,6 +217,7 @@
     </ClCompile>
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="StdLog.cpp" />
+    <ClCompile Include="WorkerThread.cpp" />
     <ClCompile Include="wsock.cpp" />
   </ItemGroup>
   <ItemGroup>

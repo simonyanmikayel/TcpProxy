@@ -75,7 +75,7 @@ ROUTER_NODE* Archive::addRouter(const Router* pRouter)
         const char* remote_addr = pRouter->GetRote()->remote_addr.c_str();
         WORD cb_name = (WORD)strlen(name);
         WORD cb_remote_addr = (WORD)strlen(remote_addr);
-        pNode = (ROUTER_NODE*)m_pNodes->Add(sizeof(ROUTER_NODE) + cb_name + 1 + cb_remote_addr + cb_remote_addr, true);
+        pNode = (ROUTER_NODE*)m_pNodes->Add(sizeof(ROUTER_NODE) + cb_name + 1 + cb_remote_addr + 1, true);
         if (!pNode)
             return nullptr;
 
@@ -84,6 +84,7 @@ ROUTER_NODE* Archive::addRouter(const Router* pRouter)
         pNode->local_port = pRouter->GetRote()->local_port;
         pNode->remote_port = pRouter->GetRote()->remote_port;
         pNode->cb_name = cb_name;
+        pNode->cb_remote_addr = cb_remote_addr;
         memcpy(pNode->name(), name, cb_name);
         memcpy(pNode->remote_addr(), remote_addr, cb_remote_addr);
         getRootNode()->add_child(pNode);
@@ -131,7 +132,7 @@ CONN_NODE* Archive::addConnection(const Connection* pConnection)
     return pNode;
 }
 
-RECV_NODE* Archive::addRecv(const Socket* pSocket, char* pData, DWORD cData)
+EXCHANGE_NODE* Archive::addExchange(const Socket* pSocket, char* pData, DWORD cData)
 {
     SYNC sync;
     Connection* pConnection = pSocket->m_pConnection;
@@ -140,19 +141,34 @@ RECV_NODE* Archive::addRecv(const Socket* pSocket, char* pData, DWORD cData)
     if (!pConnNode)
         return nullptr;
 
-    RECV_NODE* pNode = (RECV_NODE*)m_pNodes->Add(sizeof(RECV_NODE) + cData, true);
+    EXCHANGE_NODE* pNode = (EXCHANGE_NODE*)m_pNodes->Add(sizeof(EXCHANGE_NODE) + cData, true);
     if (!pNode)
         return nullptr;
 
     GetLocalTime(&pNode->time);
     pNode->cData = cData;
     memcpy(pNode->data(), pData, cData);
-    pNode->data_type = LOG_TYPE::RECV;
+    pNode->data_type = LOG_TYPE::EXCHANGE;
     pNode->isLocal = pConnection->IsAccepSocket(pSocket);
     if (pNode->isLocal)
         pConnNode->cSend += cData;
     else
         pConnNode->cRecvd += cData;
     pConnNode->add_child(pNode);
+    return pNode;
+}
+
+LOG_NODE* Archive::importNode(DWORD size, FILE* fp, LOG_NODE* pParentNode, DWORD data_type)
+{
+    ATLASSERT(size > 0);
+    LOG_NODE* pNode = (CONN_NODE*)m_pNodes->Add(size + sizeof(LOG_NODE), true);
+    if (pNode) {
+        if (1 != fread(((char*)pNode) + sizeof(LOG_NODE), size, 1, fp))
+            pNode = nullptr;
+    }
+    if (pNode) {
+        pNode->data_type = (LOG_TYPE)data_type;
+        pParentNode->add_child(pNode);
+    }
     return pNode;
 }

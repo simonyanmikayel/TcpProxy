@@ -190,7 +190,7 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 					}
 					else if (IO_ACTION::RECV == action)
 					{
-						gArchive.addRecv(pSocket, pSocket->buf, entry.dwNumberOfBytesTransferred);
+						gArchive.addExchange(pSocket, pSocket->buf, entry.dwNumberOfBytesTransferred);
 						pConnection->onRecv();
 						if (pConnection->IsConnectSocket(pSocket) && pRouter->GetRote()->closeWhenDataReceived)
 						{

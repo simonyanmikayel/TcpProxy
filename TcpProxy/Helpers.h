@@ -2,6 +2,7 @@
 
 extern HWND hwndMain;
 
+#define WM_INPORT_TASK                 WM_USER + 1001
 #define WM_SHOW_NGS                    WM_USER + 1003
 #define WM_UPDATE_TREE                 WM_USER + 1004
 #define WM_CLOSE_RANDOMLY              WM_USER + 1005

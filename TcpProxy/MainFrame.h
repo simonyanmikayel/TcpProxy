@@ -34,6 +34,7 @@ public:
         MESSAGE_HANDLER(WM_SHOW_NGS, onShowMsg)
         MESSAGE_HANDLER(WM_UPDATE_TREE, onUpdateTree)
         MESSAGE_HANDLER(WM_CLOSE_RANDOMLY, onCloseRandomly)
+        MESSAGE_HANDLER(WM_INPORT_TASK, OnImportTask);
         COMMAND_ID_HANDLER(ID_APP_EXIT, OnFileExit)
         COMMAND_ID_HANDLER(ID_APP_ABOUT, OnAppAbout)
         COMMAND_ID_HANDLER(ID_VIEW_STARTPROXY, OnStartProxy)
@@ -41,6 +42,8 @@ public:
         COMMAND_ID_HANDLER(ID_VIEW_ROUTE_TABLSE, OnRouteTable)
         COMMAND_ID_HANDLER(ID_VIEW_SETTINGS, OnProxySettings)
         COMMAND_ID_HANDLER(ID_VIEW_CLEARLOG, OnClearLog)
+        COMMAND_ID_HANDLER(ID_FILE_EXPORTLOG, OnExportLog)
+        COMMAND_ID_HANDLER(ID_FILE_IMPORTLOG, OnImportLog)
 
         CHAIN_MSG_MAP(CUpdateUI<CMainFrame>)
         CHAIN_MSG_MAP(CFrameWindowImpl<CMainFrame>)
@@ -58,9 +61,12 @@ public:
     LRESULT OnRouteTable(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnProxySettings(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT OnClearLog(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+    LRESULT OnExportLog(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
+    LRESULT OnImportLog(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
     LRESULT onShowMsg(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
     LRESULT onUpdateTree(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
     LRESULT onCloseRandomly(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+    LRESULT OnImportTask(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 
     void UpdateStatusBar();
     void SetTitle();
@@ -70,6 +76,7 @@ private:
     void StartLogging();
     void StopLogging();
     void ClearLog();
+    CString  m_importExportFile;
 };
 
 extern CMainFrame* gMainFrame;

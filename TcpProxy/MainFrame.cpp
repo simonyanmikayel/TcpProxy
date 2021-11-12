@@ -5,6 +5,7 @@
 #include "Proxy.h"
 #include "DlgRouteTable.h"
 #include "DlgSettings.h"
+#include "DlgProgress.h"
 
 HWND  hwndMain;
 CMainFrame* gMainFrame;
@@ -72,7 +73,10 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 void CMainFrame::SetTitle()
 {
     CHAR pBuf[256];
-    _sntprintf_s(pBuf, _countof(pBuf), _countof(pBuf) - 1, TEXT("%s"), TEXT("TCP Proxy"));
+    if (m_importExportFile.IsEmpty())
+        _sntprintf_s(pBuf, _countof(pBuf), _countof(pBuf) - 1, TEXT("%s"), TEXT("TCP Proxy"));
+    else
+        _sntprintf_s(pBuf, _countof(pBuf), _countof(pBuf) - 1, TEXT("%s - %s"), m_importExportFile.GetString(), TEXT("TCP Proxy"));
     SetWindowText(pBuf);
 }
 
@@ -142,6 +146,24 @@ LRESULT CMainFrame::OnClearLog(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCt
     return 0;
 }
 
+LRESULT CMainFrame::OnExportLog(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    DlgProgress dlg(TASK_TYPE::EXPORT, NULL);
+    dlg.DoModal();
+    m_importExportFile = dlg.getFileName();
+    SetTitle();
+    return 0;
+}
+
+LRESULT CMainFrame::OnImportLog(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+{
+    DlgProgress dlg(TASK_TYPE::IMPORT, NULL);
+    dlg.DoModal();
+    m_importExportFile = dlg.getFileName();
+    SetTitle();
+    return 0;
+}
+
 LRESULT CMainFrame::OnRouteTable(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
 {
     DlgRouteTable dlg;
@@ -198,6 +220,22 @@ LRESULT CMainFrame::onCloseRandomly(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam,
 
     return true;
 }
+
+LRESULT CMainFrame::OnImportTask(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
+{
+    if (wParam == 0)
+    {
+        StopLogging();
+        ClearLog();
+    }
+    else
+    {
+        RefreshLog();
+    }
+
+    return 0;
+}
+
 
 LRESULT CMainFrame::onUpdateTree(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /*bHandled*/)
 {

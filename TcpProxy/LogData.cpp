@@ -2,6 +2,21 @@
 #include "Archive.h"
 #include "LogData.h"
 
+DWORD LOG_NODE::nodeSize() {
+    if (isRoot())
+        return asRoot()->size();
+    else if (isRouter())
+        return asRouter()->size();
+    else if (isConn())
+        return asConn()->size();
+    else if (isExchange())
+        return asExchange()->size();
+    else {
+        ATLASSERT(FALSE);
+        return sizeof(*this);
+    }
+}
+
 void LOG_NODE::CalcLines()
 {
     LOG_NODE* pNode = gArchive.getRootNode();
@@ -67,7 +82,7 @@ int LOG_NODE::getTreeImage()
         else
             return 2;//IDI_ICON_TREE_CONN_INITIAL
     }
-    else if (RECV_NODE* p = asRecv())
+    else if (EXCHANGE_NODE* p = asExchange())
     {
         return p->isLocal ? 5 : 6;//IDI_ICON_TREE_RECV_LOCAL or IDI_ICON_TREE_RECV_REMOTE
     }
@@ -145,7 +160,7 @@ CHAR* LOG_NODE::getTreeText(int* cBuf)
                 p->closeTime.wHour, p->closeTime.wMinute, p->closeTime.wSecond, p->closeTime.wMilliseconds, dueTo);
         }
     }
-    else if (RECV_NODE* p = asRecv())
+    else if (EXCHANGE_NODE* p = asExchange())
     {        
         cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("%s %d bytes "),
             p->isLocal ? "-> sent " : "<- received ", p->cData);

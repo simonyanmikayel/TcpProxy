@@ -56,7 +56,7 @@ void CLogDataView::OnSelectionChanged(LOG_NODE* pNode)
                 p->closeTime.wHour, p->closeTime.wMinute, p->closeTime.wSecond, p->closeTime.wMilliseconds, dueTo);
         }
     }
-    else if (RECV_NODE* p = pNode->asRecv())
+    else if (EXCHANGE_NODE* p = pNode->asExchange())
     {
         cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "%s %d bytes ",
             p->isLocal ? "-> send " : "<- received ", p->cData);
