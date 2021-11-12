@@ -99,18 +99,19 @@ void Proxy::AddRoute(const ROUTE& r)
 	STDLOG("");
 	m_Routers.push_back(std::make_unique<Router>(r));
 	std::unique_ptr<Router>& router = m_Routers.back();
-	gArchive.addRouter(router.get());
+	//!!!gArchive.addRouter(router.get());
 	if (Running())
 		router->StartListening(m_hIoCompPort);
 }
 
-void Proxy::ShowRoutes()
-{
-	for (auto& r : m_Routers)
-	{
-		gArchive.addRouter(r.get());
-	}
-}
+//!!!
+//void Proxy::ShowRoutes()
+//{
+//	for (auto& r : m_Routers)
+//	{
+//		gArchive.addRouter(r.get());
+//	}
+//}
 
 DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 {

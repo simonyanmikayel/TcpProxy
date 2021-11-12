@@ -11,7 +11,7 @@ public:
     void Stop();
     bool StopRandomly(DWORD timeout);
     void AddRoute(const ROUTE& r);
-    void ShowRoutes();
+    //!!!void ShowRoutes();
     boolean Running() { return m_hIoCompPort != NULL; }
     HANDLE GetIoCompletionPort() { return m_hIoCompPort; }
 
