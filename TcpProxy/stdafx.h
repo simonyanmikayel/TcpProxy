@@ -140,7 +140,7 @@ void __cdecl operator delete(void* p, LPCSTR lpszFileName, int nLine);
 // trace function and TRACE macro
 
 #ifdef DEBUG
-	#define _STDLOG
+	//#define _STDLOG
 #endif
 #include "StdLog.h"
 

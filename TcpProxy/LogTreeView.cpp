@@ -501,7 +501,7 @@ void CLogTreeView::RefreshTree()
 	{
 		RedrawItems(firstAffected, gArchive.getRootNode()->GetExpandCount());
 	}
-
+	Invalidate(FALSE);
 	Helpers::UpdateStatusBar();
 }
 
