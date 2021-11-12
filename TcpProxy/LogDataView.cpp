@@ -42,7 +42,7 @@ void CLogDataView::OnSelectionChanged(LOG_NODE* pNode)
     }
     else if (CONN_NODE* p = pNode->asConn())
     {        
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "%s\r\nsent %d bytes\r\nreceived %d bytes\r\n", p->peername, p->cSend, p->cRecvd);
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "Client IP: %s\r\nsent %d bytes\r\nreceived %d bytes\r\n", p->peername, p->cSend, p->cRecvd);
         cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "created at %02d:%02d:%02d.%03d\r\n", p->initTime.wHour, p->initTime.wMinute, p->initTime.wSecond, p->initTime.wMilliseconds);
         if (p->opened)
         {

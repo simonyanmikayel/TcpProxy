@@ -33,14 +33,14 @@ void Connection::onConnect()
 	SOCKADDR_IN* localAddr = (SOCKADDR_IN*)m_AcceptSocket.addrBuf;
 	SOCKADDR_IN* remoteAddr = (SOCKADDR_IN*)(m_AcceptSocket.addrBuf + Socket::addrBufLen);
 	char* localName = inet_ntoa(localAddr->sin_addr);
-	char* remoteName = inet_ntoa(remoteAddr->sin_addr);
+	char* peername = inet_ntoa(remoteAddr->sin_addr);
 	CONN_NODE* pNode = gArchive.getConnection(this);
 	if (pNode)
 	{
 		pNode->connectTime = connectTime;
 		pNode->opened = 1;
-		if (remoteName)
-			strncpy_s(pNode->peername, remoteName, _countof(pNode->peername) - 1);
+		if (peername)
+			strncpy_s(pNode->peername, peername, _countof(pNode->peername) - 1);
 		if (pNode->posInTree && pNode->parent && pNode->parent->expanded)
 			::PostMessage(hwndMain, WM_UPDATE_TREE, (WPARAM)pNode->posInTree, (LPARAM)pNode->posInTree);
 	}
