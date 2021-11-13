@@ -297,7 +297,9 @@ void CMainFrame::ClearLog()
     gArchive.lock();
     gArchive.clearArchive();
     m_view.ClearLog();
-    //!!!gProxy.ShowRoutes();
+#ifdef _SHOW_ALL_ROWTES
+    gProxy.ShowRoutes();
+#endif
     gArchive.unlock();
 }
 
