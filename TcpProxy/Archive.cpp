@@ -141,6 +141,8 @@ EXCHANGE_NODE* Archive::addExchange(const Socket* pSocket, char* pData, DWORD cD
     if (!pConnNode)
         return nullptr;
 
+    ROUTER_NODE* pRouterNode = pConnNode->parent->asRouter();
+
     EXCHANGE_NODE* pNode = (EXCHANGE_NODE*)m_pNodes->Add(sizeof(EXCHANGE_NODE) + cData, true);
     if (!pNode)
         return nullptr;
@@ -150,10 +152,14 @@ EXCHANGE_NODE* Archive::addExchange(const Socket* pSocket, char* pData, DWORD cD
     memcpy(pNode->data(), pData, cData);
     pNode->data_type = LOG_TYPE::EXCHANGE;
     pNode->isLocal = pConnection->IsAccepSocket(pSocket);
-    if (pNode->isLocal)
+    if (pNode->isLocal) {
         pConnNode->cSend += cData;
-    else
+        pRouterNode->cSend += cData;
+    }
+    else {
         pConnNode->cRecvd += cData;
+        pRouterNode->cRecvd += cData;
+    }
     pConnNode->add_child(pNode);
     return pNode;
 }

@@ -93,6 +93,8 @@ struct ROUTER_NODE : LOG_NODE
     DWORD remote_port;
     WORD cb_name;
     WORD cb_remote_addr;
+    DWORD cSend;
+    DWORD cRecvd;
     char* name() { return (char*)(this) + sizeof(*this); }
     char* remote_addr() { return name() + cb_name + 1; }
     DWORD size() { return sizeof(*this) + cb_name + 1 + cb_remote_addr + 1; }
