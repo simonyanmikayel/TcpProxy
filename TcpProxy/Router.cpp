@@ -125,7 +125,7 @@ boolean Router::StartListening(HANDLE hIoCompPort)
 	m_ListenSocket = CreateBoundTcpSocket(m_Route.local_port);
 	if (m_ListenSocket == INVALID_SOCKET) 
 	{
-		Helpers::SysErrMessageBox("Create of ListenSocket socket failed with error: %u\n", WSAGetLastError());
+		Helpers::SysErrMessageBox("Create of ListenSocket socket on port %d failed with error: %u\n", m_Route.local_port, WSAGetLastError());
 		return false;
 	}
 
