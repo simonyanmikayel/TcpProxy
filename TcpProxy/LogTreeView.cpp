@@ -3,6 +3,7 @@
 #include "MainView.h"
 #include "Settings.h"
 #include "LogTreeView.h"
+#include "DlgProgress.h"
 
 enum STATE_IMAGE { STATE_IMAGE_COLAPSED, STATE_IMAGE_EXPANDED, STATE_IMAGE_CHECKED, STATE_IMAGE_UNCHECKE };
 static const int min_colWidth = 16;
@@ -268,6 +269,9 @@ LRESULT CLogTreeView::OnRButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
 		disable = (!pNode->lastChild);
 		Helpers::AddMenu(hMenu, cMenu, ID_TREE_EXPAND_ALL, _T("Expand All"), disable);
 
+		disable = (!pNode->isConn());
+		Helpers::AddMenu(hMenu, cMenu, ID_TREE_SAVE_EXCHANGE, _T("Save Exchange"), disable);
+
 		UINT nRet = TrackPopupMenu(hMenu, TPM_RETURNCMD | TPM_TOPALIGN | TPM_LEFTALIGN, pt.x, pt.y, 0, m_hWnd, 0);
 		DestroyMenu(hMenu);
 		if (nRet == ID_TREE_EXPAND_ALL)
@@ -277,6 +281,11 @@ LRESULT CLogTreeView::OnRButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
 		else if (nRet == ID_TREE_COLLAPSE_ALL)
 		{
 			CollapseExpandAll(pNode, false);
+		}
+		else if (nRet == ID_TREE_SAVE_EXCHANGE)
+		{
+			DlgProgress dlg(TASK_TYPE::SAVE_EXCHANGE, NULL, pNode->asConn());//"d:\\ul\\_temp\\1"
+			dlg.DoModal();
 		}
 
 		//stdlog("%u\n", GetTickCount());

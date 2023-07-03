@@ -70,7 +70,7 @@ bool Proxy::StopRandomly(DWORD timeout)
 					}
 					else
 					{
-						p->Close(IO_ACTION::PROXY_STOP, ERROR_SOURCE::PROXY, __FUNCTION__, __LINE__);
+						removeConnection(p.get(), IO_ACTION::PROXY_STOP, ERROR_SOURCE::PROXY, __FUNCTION__, __LINE__);
 						::PostMessage(hwndMain, WM_UPDATE_TREE, 0, -1);
 					}
 				}
@@ -87,11 +87,39 @@ void Proxy::Stop()
 		return;
 
 	m_bStoped = true;
-	m_Routers.clear();
+	for (auto& r : m_Routers)
+	{
+		r->StopListening();
+	}
 	CloseHandle(m_hIoCompPort);
 	WaitForSingleObject(m_hIoCompThread, INFINITE);
+	for (auto& r : m_Routers)
+	{
+		r->StopConnections();
+	}
+	m_Routers.clear();
 	m_hIoCompPort = NULL;
 	m_hIoCompThread = NULL;
+}
+
+void Proxy::removeConnection(Connection* pConnection, IO_ACTION action, ERROR_SOURCE error_source, const char* func, int line) {
+	if (pConnection->m_RefCount <= 0) {
+		if (pConnection->m_RefCount < 0) {
+			STDLOG("Implementation error at %d. RefCount=%d \n", __LINE__, pConnection->m_RefCount);
+		}
+		bool found = false;
+		for (auto& r : m_Routers)
+		{
+			if (r->HasConnection(pConnection)) {
+				pConnection->Close(action, error_source, func, line, 0);
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			STDLOG("Implementation error at %d. connection not in the list \n", __LINE__);
+		}
+	}
 }
 
 void Proxy::AddRoute(const ROUTE& r)
@@ -146,6 +174,7 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 			Socket* pSocket = pMyoverlapped->GetSocket();
 			IO_ACTION action = pMyoverlapped->GetAction();
 			Connection* pConnection = pSocket->m_pConnection;
+			pConnection->m_RefCount--;
 			if (pSocket->This != (void*)pSocket || action <= IO_ACTION::NONE || action >= IO_ACTION::PROXY_STOP || (!pConnection->IsAccepSocket(pSocket) && !pConnection->IsConnectSocket(pSocket)) )
 			{
 				Helpers::SysErrMessageBox("Implementation error 1");
@@ -165,7 +194,7 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 				if (IO_ACTION::ACCEPT == action)
 				{
 					if (!pRouter->DoAccept(pProxy->m_hIoCompPort)) //loop of accept
-						pConnection->Close(IO_ACTION::ACCEPT, ERROR_SOURCE::CLIENT, __FUNCTION__, __LINE__);
+						pProxy->removeConnection(pConnection, IO_ACTION::ACCEPT, ERROR_SOURCE::CLIENT, __FUNCTION__, __LINE__);
 				}
 				if (err == 0 && entry.dwNumberOfBytesTransferred == 0 && (IO_ACTION::RECV == action || IO_ACTION::SEND == action))
 				{
@@ -177,7 +206,7 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 					{
 						gArchive.addConnection(pConnection);
 						if (!pRouter->DoConnect(pConnection, pProxy->m_hIoCompPort))
-							pConnection->Close(IO_ACTION::CONNECT, ERROR_SOURCE::SERVER, __FUNCTION__, __LINE__);
+							pProxy->removeConnection(pConnection, IO_ACTION::CONNECT, ERROR_SOURCE::SERVER, __FUNCTION__, __LINE__);
 					}
 					else if (IO_ACTION::CONNECT == action)
 					{
@@ -187,10 +216,10 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 						    ::PostMessage(hwndMain, WM_CLOSE_RANDOMLY, 0, 0);
 						}
 
-						if (!pRouter->DoRecv(&pConnection->m_AcceptSocket, pProxy->m_hIoCompPort))
-							pConnection->Close(IO_ACTION::RECV, ERROR_SOURCE::CLIENT, __FUNCTION__, __LINE__);
-						if (!pRouter->DoRecv(&pConnection->m_ConnectSocket, pProxy->m_hIoCompPort))
-							pConnection->Close(IO_ACTION::RECV, ERROR_SOURCE::SERVER, __FUNCTION__, __LINE__);
+						if (!pRouter->DoRecv(pConnection , &pConnection->m_AcceptSocket, pProxy->m_hIoCompPort))
+							pProxy->removeConnection(pConnection, IO_ACTION::RECV, ERROR_SOURCE::CLIENT, __FUNCTION__, __LINE__);
+						if (!pRouter->DoRecv(pConnection, &pConnection->m_ConnectSocket, pProxy->m_hIoCompPort))
+							pProxy->removeConnection(pConnection, IO_ACTION::RECV, ERROR_SOURCE::SERVER, __FUNCTION__, __LINE__);
 					}
 					else if (IO_ACTION::RECV == action)
 					{
@@ -200,7 +229,7 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 						{
 							STDLOG("pSocket: %s(%d) closeWhenDataReceived",
 								SocketTypeNmae(pConnection->SocketType(pSocket)), pSocket->m_s);
-							pConnection->Close(IO_ACTION::PROXY_STOP, ERROR_SOURCE::PROXY, __FUNCTION__, __LINE__);
+							pProxy->removeConnection(pConnection, IO_ACTION::PROXY_STOP, ERROR_SOURCE::PROXY, __FUNCTION__, __LINE__);
 						}
 						else if (pConnection->IsConnectSocket(pSocket) && pRouter->GetRote()->purgeReceivedPakage)
 						{
@@ -216,29 +245,29 @@ DWORD WINAPI Proxy::IoCompThread(LPVOID lpParameter)
 								entry.dwNumberOfBytesTransferred /= 2;
 								STDLOG("pSocket: %s(%d) sendHalfOfData",
 									SocketTypeNmae(pConnection->SocketType(pSocket)), pSocket->m_s);
-								if (!pRouter->DoSend(pSendSocket, entry.dwNumberOfBytesTransferred, pSocket->buf, pProxy->m_hIoCompPort))
-									pConnection->Close(IO_ACTION::SEND, pConnection->IsAccepSocket(pSendSocket) ? ERROR_SOURCE::CLIENT : ERROR_SOURCE::SERVER, __FUNCTION__, __LINE__);
+								if (!pRouter->DoSend(pConnection, pSendSocket, entry.dwNumberOfBytesTransferred, pSocket->buf, pProxy->m_hIoCompPort))
+									pProxy->removeConnection(pConnection, IO_ACTION::SEND, pConnection->IsAccepSocket(pSendSocket) ? ERROR_SOURCE::CLIENT : ERROR_SOURCE::SERVER, __FUNCTION__, __LINE__);
 								else
-									pConnection->Close(IO_ACTION::PROXY_STOP, ERROR_SOURCE::PROXY, __FUNCTION__, __LINE__);
+									pProxy->removeConnection(pConnection, IO_ACTION::PROXY_STOP, ERROR_SOURCE::PROXY, __FUNCTION__, __LINE__);
 							}
 							else
 							{
-								if (!pRouter->DoSend(pSendSocket, entry.dwNumberOfBytesTransferred, pSocket->buf, pProxy->m_hIoCompPort))
-									pConnection->Close(IO_ACTION::RECV, pConnection->IsAccepSocket(pSendSocket) ? ERROR_SOURCE::CLIENT : ERROR_SOURCE::SERVER, __FUNCTION__, __LINE__);
+								if (!pRouter->DoSend(pConnection, pSendSocket, entry.dwNumberOfBytesTransferred, pSocket->buf, pProxy->m_hIoCompPort))
+									pProxy->removeConnection(pConnection, IO_ACTION::RECV, pConnection->IsAccepSocket(pSendSocket) ? ERROR_SOURCE::CLIENT : ERROR_SOURCE::SERVER, __FUNCTION__, __LINE__);
 							}
 						}
 					}
 					else if (IO_ACTION::SEND == action)
 					{
 						Socket* pRecvSocket = pConnection->GetPear(pSocket);
-						if (!pRouter->DoRecv(pRecvSocket, pProxy->m_hIoCompPort)) // recive loop
-							pConnection->Close(IO_ACTION::RECV, pConnection->IsAccepSocket(pRecvSocket) ? ERROR_SOURCE::CLIENT : ERROR_SOURCE::SERVER, __FUNCTION__, __LINE__);
+						if (!pRouter->DoRecv(pConnection, pRecvSocket, pProxy->m_hIoCompPort)) // recive loop
+							pProxy->removeConnection(pConnection, IO_ACTION::RECV, pConnection->IsAccepSocket(pRecvSocket) ? ERROR_SOURCE::CLIENT : ERROR_SOURCE::SERVER, __FUNCTION__, __LINE__);
 					}
 				}
 				else
 				{
 					if (err != STATUS_PENDING)
-						pConnection->Close(action, pConnection->IsAccepSocket(pSocket) ? ERROR_SOURCE::CLIENT : ERROR_SOURCE::SERVER, __FUNCTION__, __LINE__);
+						pProxy->removeConnection(pConnection, action, pConnection->IsAccepSocket(pSocket) ? ERROR_SOURCE::CLIENT : ERROR_SOURCE::SERVER, __FUNCTION__, __LINE__);
 				}
 			}
 		}

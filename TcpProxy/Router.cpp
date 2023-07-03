@@ -56,11 +56,11 @@ void Connection::onRecv()
 	}
 }
 
-void Connection::Close(IO_ACTION action, ERROR_SOURCE error_source, char* file, int line)
+void Connection::Close(IO_ACTION action, ERROR_SOURCE error_source, const char* func, int line, int dummy)
 { 
 	if (!closed)
 	{
-		STDLOG("Connection closed from %s:%d: action=%s, err_src=%s", file, line, IoActionNmae(action), ErrorSourceNmae(error_source));
+		STDLOG("Connection closed from %s:%d: action=%s, err_src=%s", func, line, IoActionNmae(action), ErrorSourceNmae(error_source));
 		closed = true;
 		m_io_action = action;
 		m_error_source = error_source;
@@ -91,7 +91,6 @@ Router::Router(const ROUTE& r) :
 Router::~Router()
 {
 	STDLOG("");
-	Stop();
 }
 
 SOCKET CreateBoundTcpSocket(u_short port = 0)
@@ -245,11 +244,12 @@ boolean Router::DoConnect(Connection* pConnection, HANDLE hIoCompPort)
 	return true;
 }
 
-boolean Router::DoRecv(Socket* pSocket, HANDLE hIoCompPort)
+boolean Router::DoRecv(Connection* pConnection, Socket* pSocket, HANDLE hIoCompPort)
 {
 	STDLOG("Socket %d", pSocket->m_s);
 	DWORD dwBytes = 0, dwFlags = 0;
 	WSABUF wsabuf = { pSocket->bufSize, pSocket->buf };
+	pConnection->m_RefCount++;
 	int Result = WSARecv(pSocket->m_s, &wsabuf, 1, &dwBytes, &dwFlags, pSocket->GetOverlapped(IO_ACTION::RECV), 0);
 
 	if (Result == SOCKET_ERROR) 
@@ -258,17 +258,19 @@ boolean Router::DoRecv(Socket* pSocket, HANDLE hIoCompPort)
 		if (dwError != ERROR_IO_PENDING)
 		{
 			STDLOG("DoRecv error: %u", dwError);
+			pConnection->m_RefCount--;
 			return false;
 		}
 	}
 	return true;
 }
 
-boolean Router::DoSend(Socket* pSocket, DWORD dwNumberOfBytes, char* buf, HANDLE hIoCompPort)
+boolean Router::DoSend(Connection* pConnection, Socket* pSocket, DWORD dwNumberOfBytes, char* buf, HANDLE hIoCompPort)
 {
 	STDLOG("Socket %d dwNumberOfBytes-%d buf=%p", pSocket->m_s, dwNumberOfBytes, buf);
 	DWORD dwBytes = 0, dwFlags = 0;
 	WSABUF wsabuf = { dwNumberOfBytes, buf };
+	pConnection->m_RefCount++;
 	int Result = WSASend(pSocket->m_s, &wsabuf, 1, &dwBytes, dwFlags, pSocket->GetOverlapped(IO_ACTION::SEND), 0);
 
 	if (Result == SOCKET_ERROR)
@@ -277,18 +279,31 @@ boolean Router::DoSend(Socket* pSocket, DWORD dwNumberOfBytes, char* buf, HANDLE
 		if (dwError != ERROR_IO_PENDING)
 		{
 			STDLOG("DoSend error: %u", dwError);
+			pConnection->m_RefCount--;
 			return false;
 		}
 	}
 	return true;
 }
 
-void Router::Stop()
+bool Router::HasConnection(Connection* pConnection) 
 {
-	STDLOG("");
-	closesocket(m_ListenSocket);
 	for (auto& p : m_connections)
 	{
-		p->Close(IO_ACTION::PROXY_STOP, ERROR_SOURCE::PROXY, __FUNCTION__, __LINE__);
+		if (p.get() == pConnection)
+			return true;
+	}
+	return false;
+}
+void Router::StopListening()
+{
+	closesocket(m_ListenSocket);
+}
+
+void Router::StopConnections()
+{
+	for (auto& p : m_connections)
+	{
+		p->Close(IO_ACTION::PROXY_STOP, ERROR_SOURCE::PROXY, __FUNCTION__, __LINE__, 0);
 	}
 }

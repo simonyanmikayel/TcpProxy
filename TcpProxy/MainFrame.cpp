@@ -88,7 +88,12 @@ LRESULT CMainFrame::OnActivate(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, 
         activated = true;
         gSettings.RestoreWindPos(m_hWnd);
 
+#if 1
         PostMessage(WM_COMMAND, ID_VIEW_STARTPROXY, 0);
+#else
+        DlgProgress dlg(TASK_TYPE::IMPORT, "d:\\ul\\_temp\\videostream");
+        dlg.DoModal();
+#endif
         //PostMessage(WM_COMMAND, ID_VIEW_ROUTE_TABLSE, 0);
     }
 

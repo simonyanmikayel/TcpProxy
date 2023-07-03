@@ -8,10 +8,10 @@
 #pragma warning( push )
 #pragma warning(disable:4477) //string '%d' requires an argument of type 'int *', but variadic argument 2 has type 'char *'
 
-DlgProgress::DlgProgress(TASK_TYPE taskType, LPSTR lpstrFile)
+DlgProgress::DlgProgress(TASK_TYPE taskType, LPSTR lpstrFile, CONN_NODE* pConnNode)
 {
     m_taskType = taskType;
-    m_pTaskThread = new TaskThread(taskType, lpstrFile);
+    m_pTaskThread = new TaskThread(taskType, lpstrFile, pConnNode);
 }
 
 
@@ -29,7 +29,7 @@ LRESULT DlgProgress::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPa
     }
 
     m_pTaskThread->StartWork(NULL);
-    SetTimer(1, 2000);
+    SetTimer(1, 500);
 
     m_ctrlInfo.Attach(GetDlgItem(IDC_STATIC_INFO));
     m_ctrlProgress.Attach(GetDlgItem(IDC_PROGRESS));
@@ -86,9 +86,10 @@ void DlgProgress::End(int wID)
 }
 
 ///////////////////////////////////////////////////
-TaskThread::TaskThread(TASK_TYPE taskType, LPSTR lpstrFile)
+TaskThread::TaskThread(TASK_TYPE taskType, LPSTR lpstrFile, CONN_NODE* pConnNode)
 {
     m_taskType = taskType;
+    m_pConnNode = pConnNode;
     m_isOK = false;
     m_fp = NULL;
     m_progress = 0;
@@ -184,8 +185,10 @@ void TaskThread::Work(LPVOID pWorkParam)
     {
         if (m_taskType == TASK_TYPE::IMPORT)
             FileImportLog();
-        else
+        else if (m_taskType == TASK_TYPE::EXPORT)
             FileExportLog();
+        else if (m_taskType == TASK_TYPE::SAVE_EXCHANGE)
+            FileSaveExchange();
     }
 }
 
@@ -219,6 +222,37 @@ void TaskThread::FileExportLog()
     if (!ss)
     {
         Helpers::ErrMessageBox(TEXT("Failed to export log record %d"), m_progress);
+    }
+}
+
+void TaskThread::FileSaveExchange()
+{
+    m_totoal = m_pConnNode->childCount;
+    bool ss = true;
+    LOG_NODE* pChildNode = m_pConnNode->firstChild;
+    enum DIR {DIR_NONE, DIR_IN, DIR_OUT} dir0 = DIR_NONE;
+    int nn = 2;
+    while (pChildNode && ss && IsWorking())
+    {
+        m_progress++;
+        EXCHANGE_NODE* pExchangeNode = pChildNode->asExchange();
+        if (!pExchangeNode) {
+            ss = false;
+            break;
+        }
+        DIR dir = pExchangeNode->isLocal ? DIR_IN : DIR_OUT;
+        if (dir != dir0) {
+            dir0 = dir;
+            fprintf(m_fp, "\r\n%s%d\r\n", dir == DIR_IN ? "====> " : "<==== ", nn/2);
+            nn++;
+        }
+        fwrite(pExchangeNode->data(), pExchangeNode->cData, 1, m_fp);
+        pChildNode = pChildNode->nextSibling;
+    }
+     
+    if (!ss)
+    {
+        Helpers::ErrMessageBox(TEXT("Failed to save exchange %d"), m_progress);
     }
 }
 

@@ -78,7 +78,7 @@ struct Connection
         STDLOG(""); GetLocalTime(&initTime); 
     }
     ~Connection() { STDLOG(""); m_AcceptSocket.CloseSocket(); m_ConnectSocket.CloseSocket(); }
-    void Close(IO_ACTION action, ERROR_SOURCE error_source, char* file, int line);
+    void Close(IO_ACTION action, ERROR_SOURCE error_source, const char* func, int line, int dummy);
     void onConnect();
     void onRecv();
     SOCKET_TYPE SocketType(const Socket* pSocket) const { return pSocket == &m_AcceptSocket ? SOCKET_TYPE::ACCEPT : SOCKET_TYPE::CONNECT; }
@@ -97,6 +97,7 @@ struct Connection
     SYSTEMTIME connectTime = {0};
     SYSTEMTIME closeTime = { 0 };
     DWORD      closeTimeout = INFINITE;
+    int m_RefCount = 1;
 private:
     boolean opened = false;
     boolean closed = false;
@@ -112,10 +113,12 @@ public:
     boolean StartListening(HANDLE hIoCompPort);
     boolean DoAccept(HANDLE hIoCompPort);
     boolean DoConnect(Connection* pConnection, HANDLE hIoCompPort);
-    boolean DoRecv(Socket* pSocket, HANDLE hIoCompPort);
-    boolean DoSend(Socket* pSocket, DWORD dwNumberOfBytes, char* buf, HANDLE hIoCompPort);
+    boolean DoRecv(Connection* pConnection, Socket* pSocket, HANDLE hIoCompPort);
+    boolean DoSend(Connection* pConnection, Socket* pSocket, DWORD dwNumberOfBytes, char* buf, HANDLE hIoCompPort);
     DWORD ID() const { return m_id; }
-    void Stop();
+    bool HasConnection(Connection* pConnection);
+    void StopListening();
+    void StopConnections();
     const ROUTE* GetRote() const { return &m_Route; }
     const std::list<std::unique_ptr<Connection>>& getConnections() { return m_connections; }
 

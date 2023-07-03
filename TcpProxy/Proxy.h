@@ -9,6 +9,7 @@ public:
     ~Proxy();
     boolean Start(const std::vector<ROUTE>& routes);
     void Stop();
+    void removeConnection(Connection* pConnection, IO_ACTION action, ERROR_SOURCE error_source, const char* func, int line);
     bool StopRandomly(DWORD timeout);
     void AddRoute(const ROUTE& r);
 #ifdef _SHOW_ALL_ROWTES

@@ -5,7 +5,8 @@
 
 enum class TASK_TYPE {
     IMPORT,
-    EXPORT
+    EXPORT,
+    SAVE_EXCHANGE,
 };
 
 class TaskThread :
@@ -13,7 +14,7 @@ class TaskThread :
 {
     friend class DlgProgress;
 public:
-    TaskThread(TASK_TYPE taskType, LPSTR lpstrFile);
+    TaskThread(TASK_TYPE taskType, LPSTR lpstrFile, CONN_NODE* pConnNode = nullptr);
     ~TaskThread();
     virtual void Terminate();
     void Work(LPVOID pWorkParam);
@@ -28,10 +29,12 @@ private:
     CString m_strFileName;
     CString m_strFileNameWithoutExt;
     CString m_strFileExt;
+    CONN_NODE* m_pConnNode;
     bool m_isOK;
     FILE* m_fp;
 
     void FileExportLog();
+    void FileSaveExchange();
     void FileImportLog();
     bool exportLog(LOG_NODE* pNode);
     bool importNode(LOG_NODE* pNode);
@@ -41,7 +44,7 @@ class DlgProgress :
     public CDialogImpl<DlgProgress>
 {
 public:
-    DlgProgress(TASK_TYPE taskType, LPSTR lpstrFile);
+    DlgProgress(TASK_TYPE taskType, LPSTR lpstrFile, CONN_NODE* pConnNode = nullptr);
     ~DlgProgress();
     enum { IDD = IDD_PROGRESS };
 
@@ -64,6 +67,7 @@ public:
     CProgressBarCtrl m_ctrlProgress;
     TaskThread* m_pTaskThread;
     TASK_TYPE m_taskType;
+    CONN_NODE* m_pConnNode;
 };
 
 #define MAX_FN_NAME_SIZE 18

@@ -153,12 +153,16 @@ EXCHANGE_NODE* Archive::addExchange(const Socket* pSocket, char* pData, DWORD cD
     pNode->data_type = LOG_TYPE::EXCHANGE;
     pNode->isLocal = pConnection->IsAccepSocket(pSocket);
     if (pNode->isLocal) {
-        pConnNode->cSend += cData;
-        pRouterNode->cSend += cData;
+        pConnNode->cSendSize += cData;
+        pRouterNode->cSendSize += cData;
+        pConnNode->cSendCount++;
+        pRouterNode->cSendCount++;
     }
     else {
-        pConnNode->cRecvd += cData;
-        pRouterNode->cRecvd += cData;
+        pConnNode->cRecvdSize += cData;
+        pRouterNode->cRecvdSize += cData;
+        pConnNode->cRecvdCount++;
+        pRouterNode->cRecvdCount++;
     }
     pConnNode->add_child(pNode);
     return pNode;

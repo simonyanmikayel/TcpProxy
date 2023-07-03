@@ -146,14 +146,14 @@ CHAR* LOG_NODE::getTreeText(int* cBuf)
     }
     else if (ROUTER_NODE* p = asRouter())
     {
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "%s (%d->%s:%d) (conn: %d, sent: %d, rcv: %d)",
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, "%s (%d->%s:%d) (conn: %d, sent: %d/%d, rcv: %d/%d)",
             p->name(), p->local_port, p->remote_addr(), p->remote_port,
-            p->childCount, p->cSend, p->cRecvd
+            p->childCount, p->cSendCount, p->cSendSize, p->cRecvdCount, p->cRecvdSize
         );
     }
     else if (CONN_NODE* p = asConn())
     {
-        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("%s (packages: %d, sent %d, rcv %d) "), p->peername, p->childCount, p->cSend, p->cRecvd);
+        cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("%s (packages: %d, sent %d/%d, rcv %d/%d) "), p->peername, p->childCount, p->cSendCount, p->cSendSize, p->cRecvdCount, p->cRecvdSize);
         cb += _sntprintf_s(pBuf + cb, cMaxBuf - cb, cMaxBuf - cb, TEXT("(created at %02d:%02d:%02d.%03d) "), p->initTime.wHour, p->initTime.wMinute, p->initTime.wSecond,p->initTime.wMilliseconds);
         if (p->closed)
         {

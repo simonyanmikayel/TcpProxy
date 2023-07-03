@@ -18,7 +18,7 @@ struct ROUTE
     void deserialize(std::stringstream& s)
     {
         std::string str;
-        getline(s, name);
+        std::getline(s, name);
         getline(s, str); enabled = std::stoi(str);
         getline(s, str); local_port = std::stoi(str);
         getline(s, str); remote_port = std::stoi(str);

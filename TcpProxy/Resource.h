@@ -50,10 +50,13 @@
 #define IDC_PROGRESS                    1011
 #define IDC_CHECK_SEND_HALF2            1012
 #define IDC_CHECK_CLOSE_RANDOMLY        1012
+#define IDC_CHECK_CLOSE_ON_RECEIVE2     1013
+#define IDC_CHECK_HTTP_PROXY            1013
 #define ID_TREE_EXPAND_ALL              32771
 #define ID_TREE_COLLAPSE_ALL            32772
 #define ID_FILE_EXPORTLOG               32773
 #define ID_FILE_IMPORTLOG               32774
+#define ID_TREE_SAVE_EXCHANGE           32775
 
 // Next default values for new objects
 // 
@@ -61,7 +64,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        151
-#define _APS_NEXT_COMMAND_VALUE         32775
+#define _APS_NEXT_COMMAND_VALUE         32776
 #define _APS_NEXT_CONTROL_VALUE         1012
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
